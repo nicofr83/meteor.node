@@ -4,7 +4,7 @@
   "description": "Meteor db server",
   "main": "dist/index.js",
   "scripts": {
-    "test": "jest",
+    "test": "npx jest --coverage; open coverage/lcov-report/index.html",
     "build": "tsc"
   },
   "author": "Nicolas Cuvillier (2024)",
@@ -13,10 +13,13 @@
     "@types/body-parser": "^1.19.5",
     "@types/express": "^4.17.21",
     "@types/node": "^22.3.0",
+    "@types/pg": "^8.11.6",
     "body-parser": "^1.20.2",
-    "db-migrate": "^0.11.14",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "pg": "^8.12.0",
+    "reflect-metadata": "^0.2.2",
+    "typedi": "^0.10.0"
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.4",

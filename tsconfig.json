@@ -5,8 +5,11 @@
     "sourceMap": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    // "forceConsistentCasingInFileNames": true
   },
+  "emitDecoratorMetadata": true,
+  "experimentalDecorators": true,
+  "allowImportingTsExtensions": true,
   "include": ["src"],
   "exclude": ["node_modules"]
-  }
+}

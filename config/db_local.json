@@ -1,10 +1,16 @@
-"pg": {
-    "driver": "pg",
-    "user": "postgres",
-    "password": "Funicula",
-    "host": "localhost",
-    "database": "climato",
-    "port": "5432",
-    "ssl": "false",
-    "schema": "public"
+{
+  "test": {
+    "driver": "sqlite3",
+    "filename": ":memory:"
+  },
+  "dev": {
+      "driver": "pg",
+      "user": "postgres",
+      "password": "Funicula",
+      "host": "localhost",
+      "database": "climato",
+      "port": "5432",
+      "ssl": "false",
+      "schema": "public"
+    }
   }
