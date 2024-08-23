@@ -4,6 +4,11 @@ import { Service } from 'typedi';
 
 import pg from 'pg'
 
+export enum DBOptions{
+    NONE = 0,
+    LOCK = 1,
+}
+
 @Service( )
 export class DB {
     private instance_count = 0

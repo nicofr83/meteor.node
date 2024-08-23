@@ -152,7 +152,7 @@ const config: Config = {
   // testEnvironmentOptions: {},
 
   // Adds a location field to test results
-  // testLocationInResults: false,
+  testLocationInResults: false,
 
   // The glob patterns Jest uses to detect test files
   // testMatch: [
