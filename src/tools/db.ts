@@ -1,16 +1,25 @@
 import 'reflect-metadata';
 
 import { Service } from 'typedi';
-
 import pg from 'pg'
+import {DB_INT} from './db_interface'
 
-export enum DBOptions{
-    NONE = 0,
-    LOCK = 1,
+export enum DBLock{
+    NONE = 1,
+    UPDATE = 2,     // For Update
+    SKIPLOCKED = 3, // For Update Skip Locked
+    SHARE = 4       // for Share
+}
+export interface DBOptions {
+    columns: string|string[]|undefined;
+    where: string|undefined;
+    order: string|undefined;
+    lock: DBLock|undefined;
+    limit: number|undefined;
 }
 
-@Service( )
-export class DB {
+@Service()
+export class DB implements DB_INT {
     private instance_count = 0
 
     constructor() {
@@ -42,11 +51,15 @@ export class DB {
         await client.connect();
         return client;
     }
-    async beginTransaction(pgconn: pg.Client): Promise<void> {
+    async beginTransaction(pgconn: pg.Client|undefined = undefined): Promise<pg.Client> {
+        var myConn: pg.Client;
         if (!pgconn) {
-            throw new Error('No connection to database');
+            myConn = await this.connect();
+        } else {
+            myConn = pgconn;
         }
-        await pgconn.query('BEGIN');
+        await myConn.query('BEGIN');
+        return myConn;
     }
     async commitTransaction(pgconn: pg.Client): Promise<void> {
         if (!pgconn) {
@@ -60,7 +73,7 @@ export class DB {
         }
         await pgconn.query('ROLLBACK');
     }
-    async query(pgconn: pg.Client, sql: string, values: any = []): Promise<any[]> {
+    async query(pgconn: pg.Client | undefined, sql: string, values: any = []): Promise<any[]> {
         let myconn: pg.Client | undefined;
         let res: pg.QueryResult<any> | undefined;
 
@@ -72,23 +85,25 @@ export class DB {
             else
                 myconn = pgconn;
 
-            const res = await (myconn as pg.Client).query(sql, values);
+            const res = await myconn.query(sql, values);
 
             if (!pgconn)
                 this.disconnect(myconn);
 
-            return (res as pg.QueryResult<any>).rows;
+            return res.rows as any[];
 
         } catch (err) {
             console.error(err);
-            if (myconn != undefined) {
+            if (myconn != undefined){
                 this.rollbackTransaction(myconn);
-                this.disconnect(myconn as pg.Client);
+            }
+            if (!pgconn && myconn != undefined){
+                this.disconnect(myconn);
             }
             throw err;
         }
     }
-    async execute(pgconn: pg.Client, sql: string, values: any = []): Promise<any> {
+    async execute(pgconn: pg.Client | undefined, sql: string, values: any = []): Promise<any> {
         const rows = await this.query(pgconn, sql, values);
         return rows[0];
     }

@@ -40,9 +40,9 @@ describe("DB Tests", () => {
             const client = await instance.connect();
             await instance.beginTransaction(client);
             const res = await instance.execute(client, 'SELECT * from Postes order by id limit 1');
-            await instance.rollbackTransaction(client);
+            await instance.commitTransaction(client);
             await instance.disconnect(client);
-            console.dir(res);
+            // console.dir(res);
             expect(res.id).toEqual(1);
         } catch (err) {
             console.error(err);

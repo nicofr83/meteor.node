@@ -4,7 +4,8 @@
   "description": "Meteor db server",
   "main": "dist/index.js",
   "scripts": {
-    "test": "npx jest --coverage --watch; open coverage/lcov-report/index.html",
+    "test": "npx jest --coverage",
+    "test2": "npx jest --coverage; open coverage/lcov-report/index.html",
     "build": "tsc"
   },
   "author": "Nicolas Cuvillier (2024)",
