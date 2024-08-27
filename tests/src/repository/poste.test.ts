@@ -71,42 +71,76 @@ describe("Poste test", () => {
         //   }
         expect(allPostes[0].id).toEqual(1);
     }, 700 * SECONDS);
-    it("update commit", async () => {
+    it("updateAll commit", async () => {
         const db = Container.get(DB);
         const pgConn = await db.beginTransaction();
-        var myPoste = await Poste.getOne(pgConn, {'where': 'id = 1'} as DBOptions);
+        var myPoste = await Poste.getOne(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
         var altitude = myPoste.getData().altitude;
         myPoste.setData({'altitude': 150} as PosteData);
-        await myPoste.update(pgConn);
+        await myPoste.updateAll(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
         await db.commitTransaction(pgConn);
 
-        myPoste = await Poste.getOne(pgConn, {'where': 'id = 1'} as DBOptions);
+        myPoste = await Poste.getOne(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
         const new_altitude = myPoste.getData().altitude;
+
         myPoste.setData({'altitude': altitude} as PosteData);
-        await myPoste.update(pgConn);
+        await myPoste.updateAll(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
         await db.commitTransaction(pgConn);
 
         await db.disconnect(pgConn);
         expect(new_altitude).toEqual(150);
     }, 700 * SECONDS);
-    it("update rollback", async () => {
+    it("updateMe rollback", async () => {
         const db = Container.get(DB);
         const pgConn = await db.beginTransaction();
-        var myPoste = await Poste.getOne(pgConn, {'where': 'id = 1'} as DBOptions);
+        var myPoste = await Poste.getOne(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
         var altitude = myPoste.getData().altitude;
         myPoste.setData({'altitude': 150} as PosteData);
-        await myPoste.update(pgConn);
+        await myPoste.updateMe(pgConn);
+        myPoste = await Poste.getOne(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
+        expect(myPoste.getData().altitude).toEqual(150);
         await db.rollbackTransaction(pgConn);
-
-        myPoste = await Poste.getOne(pgConn, {'where': 'id = 1'} as DBOptions);
+        myPoste = await Poste.getOne(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
         expect(myPoste.getData().altitude).toEqual(altitude);
     }, 700 * SECONDS);
-    it("delete rollback", async () => {
+
+    it("updateAll rollback", async () => {
+        const db = Container.get(DB);
+        const pgConn = await db.beginTransaction();
+        var myPoste = await Poste.getOne(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
+        var altitude = myPoste.getData().altitude;
+        myPoste.setData({'altitude': 150} as PosteData);
+        await myPoste.updateAll(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
+        await db.rollbackTransaction(pgConn);
+
+        myPoste = await Poste.getOne(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
+        expect(myPoste.getData().altitude).toEqual(altitude);
+    }, 700 * SECONDS);
+    it("deleteAll rollback", async () => {
         const db = Container.get(DB);
         const pgConn = await db.beginTransaction();
         var myPoste = new Poste();
-        var deletedKeys = await myPoste.delete(pgConn, {'where': 'id in (1, 2)'} as DBOptions);
+        var deletedKeys = await myPoste.deleteAll(pgConn, {'where': 'id in (1, 2)'} as DBOptions);
         await db.rollbackTransaction(pgConn);
         expect(deletedKeys).toHaveLength(2);
     }, 700 * SECONDS);
+
+    it("deleteMe rollback", async () => {
+        const db = Container.get(DB);
+        const pgConn = await db.beginTransaction();
+        var myPoste = await Poste.getOne(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
+        var deletedKeys = await myPoste.deleteMe(pgConn);
+        await db.rollbackTransaction(pgConn);
+        expect((deletedKeys as any).id).toEqual(36);
+    }, 700 * SECONDS);
+   it("insert rollback", async () => {
+        const db = Container.get(DB);
+        const pgConn = await db.beginTransaction();
+        var myPoste = await Poste.getOne(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
+        myPoste.setData({'meteor': 'BBF015-2', id: undefined} as PosteData);
+        await myPoste.insertMe(pgConn);
+        await db.rollbackTransaction(pgConn);
+        expect(myPoste.getData().id).toBeDefined();
+    }, 700 * SECONDS);
+
 });

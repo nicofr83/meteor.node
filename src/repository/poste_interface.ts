@@ -1,8 +1,5 @@
-
-import { DBOptions } from '../tools/db'
-import pg from 'pg'
-import { Entity } from './entity';
-import { Entity_INT } from './entity_interface';
+import { Entity_Herited_INT, EntityData } from './entity_interface';
+export type Entity_Child_INT = Entity_Herited_INT;
 
 export enum Data_Source{
     NONE = 0,
@@ -20,9 +17,7 @@ export enum Load_Type{
     LOAD_CSV_FOR_OVPF = 8
 }
 
-export interface PosteData{
-    [key: string]: any;
-    id: bigint|undefined;
+export interface PosteData extends EntityData{
     meteor: string|undefined;
     delta_timezone: number | undefined;
     data_source: Data_Source | undefined;
@@ -39,14 +34,7 @@ export interface PosteData{
     last_json_date_local: Date | undefined;
     info_sync: number | undefined;
 }
-export interface Poste_INT<T> extends Entity_INT<T> {
-    getTableName(): string;
-    setTableName(newTableName: string): void;
-    getColumnsNames(curData: any, colSpec: string|string[]|undefined): string ;
-    buildSelectRequest(dbOptions: DBOptions): string;
 
-    // getById(pgconn: pg.Client, id: number, dbOptions: DBOptions): Promise<Poste_INT>;
-    // getAll(pgconn: pg.Client, id: number, dbOptions: DBOptions): Promise<Poste_INT[]>;
-    // liste(pgconn: pg.Client, id: number, dbOptions: DBOptions): Promise<PosteData[]>;
-// update(pgconn: pg.Client): Promise<void>;
+export interface Poste_INT extends Entity_Child_INT {
+
 }

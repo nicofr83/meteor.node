@@ -16,6 +16,7 @@ export interface DBOptions {
     order: string|undefined;
     lock: DBLock|undefined;
     limit: number|undefined;
+    returning: string|undefined;
 }
 
 @Service()

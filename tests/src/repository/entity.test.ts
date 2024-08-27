@@ -3,7 +3,7 @@ import { DBLock, DBOptions } from "../../../src/tools/db";
 
 const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
 
-class EntityClass extends Entity<object> {
+class EntityClass extends Entity {
     constructor(myData:any = {} as any) {
         super(myData);
     }

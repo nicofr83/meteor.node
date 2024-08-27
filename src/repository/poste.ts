@@ -1,13 +1,12 @@
 import 'reflect-metadata';
-import { Service, Container, Inject } from 'typedi';
+import { Service, Container} from 'typedi';
 import {DB, DBOptions} from "../tools/db";
-import {DB_INT} from "../tools/db_interface";
 import pg from 'pg'
 import {Entity} from "./entity";
-import {Poste_INT, PosteData} from './poste_interface';
+import {Entity_Child_INT, PosteData} from './poste_interface';
 
 @Service({ transient: true })
-export class Poste extends Entity<PosteData> implements Poste_INT<PosteData>{
+export class Poste extends Entity implements Entity_Child_INT{
 
     constructor(myData:PosteData = {} as PosteData ) {
         if (JSON.stringify(myData) != '{}') {
@@ -35,10 +34,9 @@ export class Poste extends Entity<PosteData> implements Poste_INT<PosteData>{
             }
             this.setTableName('postes');
         }
-
         public static async getOne(pgconn: pg.Client|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Poste> {
             var my_poste = new Poste()
-            const posteData = await my_poste.getOneDBData(pgconn, dbOptions);
+            const posteData = (await my_poste.getOneDBData(pgconn, dbOptions)) as PosteData;
             my_poste = new Poste(posteData);
             return my_poste;
         }
@@ -62,5 +60,27 @@ export class Poste extends Entity<PosteData> implements Poste_INT<PosteData>{
             const instance = Container.get(DB);
             const allData = await instance.query(pgconn, sqlRequest);
             return allData;
+        }
+
+        public async updateMe(pgconn: pg.Client|undefined): Promise<number|undefined>{
+            if (this.getData().id == undefined) {
+                throw new Error('Poste not loaded, then cannot updateMe');
+            }
+            const updatedIds = await this.updateAll(pgconn, {'where': 'id = ' + this.getData().id} as DBOptions);
+            if (updatedIds.length == 0) {
+                return undefined;
+            }
+            return updatedIds[0];
+        }
+
+        public async deleteMe(pgconn: pg.Client|undefined): Promise<number|undefined>{
+            if (this.getData().id == undefined) {
+                throw new Error('Poste not loaded, then cannot deleteMe');
+            }
+            const deletedIds = await this.deleteAll(pgconn, {'where': 'id = ' + this.getData().id} as DBOptions);
+            if (deletedIds.length == 0) {
+                return undefined;
+            }
+            return deletedIds[0];
         }
 }
