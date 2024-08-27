@@ -206,6 +206,5 @@ export class Entity implements Entity_INT{
         const insertedCols = await instanceDB.query(pgconn, sql, newValues);
         this.data = insertedCols[0];
         this.isDirty = false;
-        return;
     }
 }
