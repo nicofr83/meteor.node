@@ -140,6 +140,7 @@ describe("Poste test", () => {
         myPoste.setData({'meteor': 'BBF015-2', id: undefined} as PosteData);
         await myPoste.insertMe(pgConn);
         await db.rollbackTransaction(pgConn);
+        await db.execute(pgConn,"SELECT setval(pg_get_serial_sequence('obs', 'id'), max(id)) FROM obs;");
         expect(myPoste.getData().id).toBeDefined();
     }, 700 * SECONDS);
 

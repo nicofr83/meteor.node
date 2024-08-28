@@ -30,7 +30,7 @@ export class Mesure extends Entity implements Entity_Child_INT{
                     j: undefined,
                 } as MesureData);
             }
-            this.setTableName('Mesures');
+            this.setTableName('mesures');
         }
         public static async getOne(pgconn: pg.Client|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Mesure> {
             var my_Mesure = new Mesure()

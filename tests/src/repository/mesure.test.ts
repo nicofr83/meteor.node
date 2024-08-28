@@ -97,6 +97,7 @@ describe("Mesure test", () => {
         myMesure.setData({'name': 'test Mesure', id: undefined} as MesureData);
         await myMesure.insertMe(pgConn);
         await db.rollbackTransaction(pgConn);
+        await db.execute(pgConn,"SELECT setval(pg_get_serial_sequence('mesures', 'id'), max(id)) FROM mesures;");
         expect(myMesure.getData().id).toBeDefined();
     }, 700 * SECONDS);
 
