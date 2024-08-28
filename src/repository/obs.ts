@@ -3,7 +3,7 @@ import { Service, Container } from 'typedi';
 import { DB, DBOptions } from "../tools/db";
 import pg from 'pg'
 import { Entity } from "./entity";
-import { Entity_Child_INT, ObsData } from './obs_interface';
+import { Entity_Child_INT, ObsData, Code_QA } from './obs_interface';
 
 @Service({ transient: true })
 export class Obs extends Entity implements Entity_Child_INT {
