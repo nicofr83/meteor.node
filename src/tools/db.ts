@@ -1,15 +1,9 @@
 import 'reflect-metadata';
 import { Service } from 'typedi';
-
+import { DBLock } from './enums';
 import pg from 'pg'
 import {DB_INT} from './db_interface'
 
-export enum DBLock{
-    NONE = 1,
-    UPDATE = 2,     // For Update
-    SKIPLOCKED = 3, // For Update Skip Locked
-    SHARE = 4       // for Share
-}
 export interface DBOptions {
     columns: string|string[]|undefined;
     where: string|undefined;

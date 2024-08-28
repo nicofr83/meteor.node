@@ -2,12 +2,7 @@
 
 import { Entity_Herited_INT, EntityData } from './entity_interface';
 export type Entity_Child_INT = Entity_Herited_INT;
-
-export enum Code_QA{   
-    UNSET = 0,
-    VALIDATED = 1,
-    UNVALIDATED = 9
-}
+import {Code_QA} from '../tools/enums';
 
 export interface ObsData extends EntityData{
     date_local: Date|undefined;

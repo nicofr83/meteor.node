@@ -1,21 +1,6 @@
 import { Entity_Herited_INT, EntityData } from './entity_interface';
 export type Entity_Child_INT = Entity_Herited_INT;
-
-export enum Data_Source{
-    NONE = 0,
-    METEOR_OI = 1,
-    METEO_FR = 2,
-    OVPF = 3
-}
-
-export enum Load_Type{
-    NONE = 0,
-    LOAD_FROM_DUMP = 1,
-    LOAD_FROM_JSON = 2,
-    LOAD_FROM_DUMP_THEN_JSON = 3,
-    LOAD_CSV_FOR_METEOFR = 4,
-    LOAD_CSV_FOR_OVPF = 8
-}
+import {Data_Source, Load_Type} from '../tools/enums';
 
 export interface PosteData extends EntityData{
     meteor: string|undefined;

@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { Container } from 'typedi';
-import {DB, DBLock, DBOptions} from "../tools/db";
+import {DB, DBOptions} from "../tools/db";
+import {DBLock} from "../tools/enums";
 import pg from 'pg'
 import {Entity_INT, EntityData} from './entity_interface'
 import {DB_INT} from "../tools/db_interface";
