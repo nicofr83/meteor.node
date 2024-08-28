@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-
 import { Service } from 'typedi';
+
 import pg from 'pg'
 import {DB_INT} from './db_interface'
 
