@@ -1,0 +1,20 @@
+{
+    "name": "multi threadin test",
+    "version": "0.1.0",
+    "description": "",
+    "main": "main.js",
+    "scripts": {
+        "start": "tsc; node main.js"
+    },
+    "author": "Nicolas Cuvillier (2024)",
+    "license": "ISC",
+    "type": "module",
+    "dependencies": {
+        "@tsconfig/node20": "^20.1.4",
+        "@types/node": "^22.3.0",
+        "@types/pg": "^8.11.6",
+        "dotenv": "^16.4.5",
+        "reflect-metadata": "^0.2.2",
+        "typescript": "^5.5.4"
+    }
+}
