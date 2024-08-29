@@ -10,14 +10,17 @@ export class PosteMeteor extends Poste implements PosteMeteor_INT {
     constructor(data: PosteData) {
         super(data);
     }
-    public static async getDumpedPostes(): Promise<string[]> {
-        const listePostes = [] as string[];
-        const JsonListe = await Poste.getAll(
+    public static async getDumpedPostes(): Promise<string> {
+        var listePostes = '' as string;
+        const JsonListe = await Poste.liste(
             undefined,
-            {'columns': 'meteor', 'where': 'load_type & ' + Load_Type.LOAD_FROM_DUMP + ' > 0'} as DBOptions
+            {'columns': 'meteor',
+             'where': '(load_type & ' + Load_Type.LOAD_FROM_DUMP + ') > 0',
+             'order': 'meteor'} as DBOptions
         );
-        console.dir(JsonListe);
-
-        return listePostes;
+        for (const a_posteJ of JsonListe) {
+            listePostes += '\n' + (a_posteJ as any)['meteor'];
+        }
+        return listePostes.substring(1);
     }   
 }
