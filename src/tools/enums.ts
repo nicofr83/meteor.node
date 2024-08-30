@@ -33,3 +33,8 @@ export enum DBLock{
     SKIPLOCKED = 3, // For Update Skip Locked
     SHARE = 4       // for Share
 }
+
+export enum WorkerState {
+    AVAILABLE = 0,
+    RUNNING = 1,
+}

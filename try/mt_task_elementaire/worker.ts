@@ -1,35 +1,38 @@
 // worker.ts
 import { MessagePort, parentPort } from 'worker_threads';
 
-function performTask(taskId: number): void {
+function performTask(data: object): void {
+  const slotId = (data as any)['slotId'];
+  const taskId = (data as any)['taskId'];
+  console.log(`Task ${(data as any)['taskId']} in slot ${slotId} started`);
   // Simulate task execution
   setTimeout(() => {
     try {
-      console.log(`      Task ${taskId} started`);
-      if (taskId % 2 === 0) {
-        throw new Error('Task ' + taskId + ' failed');
+      if ((slotId+1) % 3 == 0) {
+        throw new Error('Error in ' + slotId + ', task ' + (data as any)['taskId']);
       }
-  
-    } catch (error: any) {
-      console.error(`      Task ${taskId} failed: ${error.message}`);
-      (parentPort as MessagePort).postMessage(JSON.stringify(
-        { 'message': 'Task ' + taskId + ' failed', 'exc': error.stack }
-      ));
-    }
-      // Notify Job Done for try and catch
-      (parentPort as MessagePort).postMessage(JSON.stringify(
-        { 'message': 'Task Done', 'taskId': taskId }
-      ));
 
-  }, Math.random() * 5000);
-  console.log(`      Task ${taskId} waiting...`);
+    } catch (error: any) {
+      // console.error(`      Task in slot ${slotId} failed: ${error.message}`);
+      (parentPort as MessagePort).postMessage(JSON.stringify(
+        {'status': 'Exception', 'slotId': slotId, 'message': error.message, 'exc': error.stack }
+      ));
+      return;
+    }
+
+    (parentPort as MessagePort).postMessage(JSON.stringify(
+      { 'status': 'Task Done', 'slotId': slotId, 'dataCB': 'This is for the callback (task: ' + taskId + ')' }
+    ));
+
+  }, Math.random() * 2000);
+  // console.log(`      Task ${taskId} waiting...`);
 }
 
-(parentPort as MessagePort).on('message', (taskId: number) => {
-  console.log(`      Task ${taskId} activated...`);
-  performTask(taskId);
+(parentPort as MessagePort).on('message', (data: object) => {
+  // console.log(`      Task ${data} activated...`);
+  performTask(data);
 });
 
-setInterval(() => {
-  console.log('     (worker is alive)');
-}, 5000);
+// setInterval(() => {
+//   console.log('     (worker is alive)');
+// }, 5000);

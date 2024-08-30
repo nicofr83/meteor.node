@@ -1,12 +1,8 @@
-// main.ts
 import { Worker } from 'worker_threads';
-enum State {
-    AVAILABLE = 0,
-    RUNNING = 1,
-}
+import {WorkerState} from '../../tools/enums';
 
-class MT_RUNONCE {
-    private state: State[] = [];
+export class RunOnce {
+    private state: WorkerState[] = [];
     private objectToProcess: Array <{'data': any, 'callback': Function|undefined}> = [];
     private worker: Worker[] = [];
     private objectInProcess = [] as (object|undefined)[];
@@ -22,7 +18,7 @@ class MT_RUNONCE {
             this.initializeWorker(this.worker[idx]);
             this.objectInProcess.push(undefined);
             this.callBackInProcess.push(undefined);
-            this.state.push(State.AVAILABLE);
+            this.state.push(WorkerState.AVAILABLE);
         }
         this.taskName = taskName;
         this.maxInstance = maxInstance;
@@ -41,8 +37,8 @@ class MT_RUNONCE {
         }
         var idx = 0;
         while (idx < this.maxInstance) {
-            if (this.state[idx] == State.AVAILABLE) {
-                this.state[idx] = State.RUNNING;
+            if (this.state[idx] == WorkerState.AVAILABLE) {
+                this.state[idx] = WorkerState.RUNNING;
                 var ObjectToProcess = this.objectToProcess.shift() as any;
                 ObjectToProcess['data']['slotId'] = idx;
                 this.objectInProcess[idx] = ObjectToProcess.data;
@@ -62,7 +58,7 @@ class MT_RUNONCE {
             const bStatus = (dataReturned['status'] == 'Task Done')? true: false;
 
             const idx = dataReturned['slotId'];
-            this.state[idx] = State.AVAILABLE;
+            this.state[idx] = WorkerState.AVAILABLE;
             this.objectInProcess[idx] = undefined;
             if (this.callBackInProcess[idx] != undefined) {
                 var finalCallback = this.callBackInProcess[idx];
@@ -88,27 +84,12 @@ class MT_RUNONCE {
                 process.exit(1);
             }, 100);
         });
-        myWorker.on('offline', () => {
-            console.log(`received offLine event`);
-        });
+        // myWorker.on('offline', () => {
+        //     console.log(`received offLine event`);
+        // });
     }
     public addJob(obj: object, callBack: (Function|undefined) = undefined) {
         this.objectToProcess.push({'data': obj, 'callback': callBack});
         this.checkQueue();
     }
 }
-
-function cb(status: boolean, ret: any) {
-    if (status) {
-        console.log(`        callback task completed: ${JSON.stringify(ret)}`);
-    } else {
-        console.log(`***     callback task failed: ${JSON.stringify(ret)}`);
-    }
-}
-const mt = new MT_RUNONCE('./worker.js', 'Test', 5, 2000);
-setTimeout(() => {
-    for (var idx = 0; idx <= 10; idx++) {
-        mt.addJob({'taskId': idx+1000, 'data': 'this is test ' + (idx+1000) }, cb);
-        };
-    }, 1000);
-

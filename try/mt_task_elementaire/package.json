@@ -1,8 +1,11 @@
 {
-    "name": "multi threadin test",
+    "name": "multi-threading-test",
     "version": "0.1.0",
     "description": "",
     "main": "main.js",
+    "compilerOptions": {
+        "module": "NodeNext"
+      },
     "scripts": {
         "start": "tsc; node main.js"
     },
@@ -15,6 +18,7 @@
         "@types/pg": "^8.11.6",
         "dotenv": "^16.4.5",
         "reflect-metadata": "^0.2.2",
+        "ts-node": "^10.9.2",
         "typescript": "^5.5.4"
     }
 }

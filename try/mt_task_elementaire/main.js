@@ -4,53 +4,108 @@ var State;
 (function (State) {
     State[State["AVAILABLE"] = 0] = "AVAILABLE";
     State[State["RUNNING"] = 1] = "RUNNING";
-    State[State["ERROR"] = 2] = "ERROR";
 })(State || (State = {}));
-var state = State.AVAILABLE;
-const waiting_list = [1, 2, 3, 4, 5];
-var idx = 0;
-const worker = new Worker('./worker.js');
-var task = -1;
-function wait_next() {
-    if (state == State.AVAILABLE) {
-        console.log('wait_next, state: ' + state);
-        if (waiting_list.length == 0) {
-            console.log('all jobs done');
-            process.exit(0);
+class MT_RUNONCE {
+    state = [];
+    objectToProcess = [];
+    worker = [];
+    objectInProcess = [];
+    callBackInProcess = [];
+    taskName;
+    maxInstance;
+    constructor(filename, taskName, maxInstance = 1, checkTimeOut = 2000) {
+        // console.log(`MT_RUNONCE: ${filename} ${taskName} ${maxInstance} ${checkTimeOut}`);
+        for (var idx = 0; idx < maxInstance; idx++) {
+            // console.log(`MT_RUNONCE: init worker ${idx}`);
+            this.worker.push(new Worker(filename));
+            this.initializeWorker(this.worker[idx]);
+            this.objectInProcess.push(undefined);
+            this.callBackInProcess.push(undefined);
+            this.state.push(State.AVAILABLE);
         }
-        task = waiting_list.shift();
-        state = State.RUNNING;
-        console.log('Task ' + task + ' sent to worker');
-        worker.postMessage(task);
+        this.taskName = taskName;
+        this.maxInstance = maxInstance;
+        setInterval(() => {
+            this.checkQueue();
+        }, checkTimeOut);
+        setInterval(() => {
+            console.dir(this);
+        }, 15000);
+    }
+    checkQueue() {
+        // Nothing in the waiting list
+        if (this.objectToProcess.length == 0) {
+            return;
+        }
+        var idx = 0;
+        while (idx < this.maxInstance) {
+            if (this.state[idx] == State.AVAILABLE) {
+                this.state[idx] = State.RUNNING;
+                var ObjectToProcess = this.objectToProcess.shift();
+                ObjectToProcess['data']['slotId'] = idx;
+                this.objectInProcess[idx] = ObjectToProcess.data;
+                this.callBackInProcess[idx] = ObjectToProcess.callback;
+                // console.log(`MT_RUNONCE: slot ${idx} starting with ${JSON.stringify(ObjectToProcess.data)}`);           
+                this.worker[idx].postMessage(ObjectToProcess.data);
+                return;
+            }
+            idx++;
+        }
+    }
+    initializeWorker(myWorker) {
+        myWorker.on('message', (message) => {
+            const dataReturned = JSON.parse(message);
+            // console.log(`Task in slot ${dataReturned['slotId']} Done -> received message: ${JSON.stringify(dataReturned)}`);
+            const bStatus = (dataReturned['status'] == 'Task Done') ? true : false;
+            const idx = dataReturned['slotId'];
+            this.state[idx] = State.AVAILABLE;
+            this.objectInProcess[idx] = undefined;
+            if (this.callBackInProcess[idx] != undefined) {
+                var finalCallback = this.callBackInProcess[idx];
+                this.callBackInProcess[idx] = undefined;
+                if (bStatus) {
+                    finalCallback(bStatus, (dataReturned.hasOwnProperty('dataCB')) ? dataReturned['dataCB'] : undefined);
+                }
+                else {
+                    finalCallback(bStatus, { 'message': dataReturned['message'], 'stack': dataReturned['stack'] });
+                }
+            }
+            this.checkQueue();
+        });
+        myWorker.on('error', (error) => {
+            console.error(`received error event: ${error}`);
+            setTimeout(() => {
+                process.exit(1);
+            }, 100);
+        });
+        myWorker.on('exit', (code) => {
+            console.log(`Exception received exit event, task ${code}`);
+            setTimeout(() => {
+                process.exit(1);
+            }, 100);
+        });
+        myWorker.on('offline', () => {
+            console.log(`received offLine event`);
+        });
+    }
+    addJob(obj, callBack = undefined) {
+        this.objectToProcess.push({ 'data': obj, 'callback': callBack });
+        this.checkQueue();
     }
 }
-setInterval(() => {
-    console.log('time_out, state: ' + state);
-    wait_next();
-}, 2000);
-worker.on('message', (message) => {
-    const messageJSON = JSON.parse(message);
-    if (messageJSON['message'] == 'Task Done') {
-        console.log('Job Done, Task: ' + messageJSON['taskId']);
-        state = State.AVAILABLE;
-        wait_next();
+function cb(status, ret) {
+    if (status) {
+        console.log(`        callback task completed: ${JSON.stringify(ret)}`);
     }
     else {
-        console.log('Message: ' + JSON.stringify(messageJSON));
+        console.log(`***     callback task failed: ${JSON.stringify(ret)}`);
     }
-});
-worker.on('error', (error) => {
-    console.error(`received error event: ${error}`);
-});
-worker.on('exit', (code) => {
-    console.log(`received exit event, task ${code}`);
-    state = State.AVAILABLE;
-    wait_next();
-});
-worker.on('online', () => {
-    console.log(`received onLine event`);
-});
-worker.on('offline', () => {
-    console.log(`received offLine event`);
-});
+}
+const mt = new MT_RUNONCE('./worker.js', 'Test', 5, 2000);
+setTimeout(() => {
+    for (var idx = 0; idx <= 10; idx++) {
+        mt.addJob({ 'taskId': idx + 1000, 'data': 'this is test ' + (idx + 1000) }, cb);
+    }
+    ;
+}, 1000);
 //# sourceMappingURL=main.js.map
