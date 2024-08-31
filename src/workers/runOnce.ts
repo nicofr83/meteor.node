@@ -1,5 +1,5 @@
 import { Worker } from 'worker_threads';
-import {WorkerState} from '../../tools/enums';
+import {WorkerState} from '../tools/enums';
 
 export class RunOnce {
     private state: WorkerState[] = [];
@@ -24,10 +24,7 @@ export class RunOnce {
         this.maxInstance = maxInstance;
         setInterval(() => {
             this.checkQueue();
-        }, checkTimeOut)
-        setInterval(() => {
-            console.dir(this);
-        }, 15000)
+        }, checkTimeOut);
     }
 
     private checkQueue() {
@@ -39,12 +36,12 @@ export class RunOnce {
         while (idx < this.maxInstance) {
             if (this.state[idx] == WorkerState.AVAILABLE) {
                 this.state[idx] = WorkerState.RUNNING;
-                var ObjectToProcess = this.objectToProcess.shift() as any;
-                ObjectToProcess['data']['slotId'] = idx;
-                this.objectInProcess[idx] = ObjectToProcess.data;
-                this.callBackInProcess[idx] = ObjectToProcess.callback;
+                var objToLaunch = this.objectToProcess.shift() as any;
+                objToLaunch['data']['slotId'] = idx;
+                this.objectInProcess[idx] = objToLaunch.data;
+                this.callBackInProcess[idx] = objToLaunch.callback;
                 // console.log(`MT_RUNONCE: slot ${idx} starting with ${JSON.stringify(ObjectToProcess.data)}`);           
-                this.worker[idx].postMessage(ObjectToProcess.data);
+                this.worker[idx].postMessage(objToLaunch.data);
                 return;
             }
             idx++;
@@ -76,13 +73,13 @@ export class RunOnce {
             console.error(`received error event: ${error}`);
             setTimeout(() => {
                 process.exit(1);
-            }, 100);
+            }, 500);
         });
         myWorker.on('exit', (code) => {
             console.log(`Exception received exit event, task ${code}`);
             setTimeout(() => {
                 process.exit(1);
-            }, 100);
+            }, 500);
         });
         // myWorker.on('offline', () => {
         //     console.log(`received offLine event`);

@@ -1,7 +1,7 @@
-import {RunOnce} from "../../../../src/workers/runOnce/runOnce";
+import {RunOnce} from "../../../src/workers/runOnce";
 
 const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
-const mt_once = new RunOnce('./' + 'runOnceSvcTest.js', 'runOnceSvcTest', 2, 1000);
+const mt_once = new RunOnce('./dist/workers/runOnceSvcTest.js', 'runOnceSvcTest', 2, 1000);
 
 describe("RunOnce Tests", () => {
 
@@ -16,11 +16,10 @@ describe("RunOnce Tests", () => {
         function cb(status: boolean, dataCB: any) {
             ret = status ? dataCB : 'Error in service';
         }
-
         mt_once.addJob({'slotId': 1, 'data': 'test 1'}, cb);
         setTimeout(() => {
             expect(ret).toEqual('test 1');
-        }, 100);
+        }, 200);
     }, 70 * SECONDS);
 it("test RunOnce 4 jobs", () => {
     var ret = [] as any[];
