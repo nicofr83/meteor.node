@@ -1,4 +1,4 @@
-import {Poste_INT, PosteData as PData} from '../repository/poste_interface'
+import {Poste_INT, PosteData as PData} from '../repository/poste_interface.js'
 // import {Data_Source, Load_Type} from '../tools/enums';
 
 export type PosteData = PData;

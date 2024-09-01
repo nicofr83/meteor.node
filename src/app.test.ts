@@ -1,5 +1,6 @@
+// import {describe, expect, test} from '@jest/globals';
 import request from "supertest";
-import app from "../../src/app";
+import app from "./app.js";
 
 describe("API server endpoints", () => {
   // GET - List all colors

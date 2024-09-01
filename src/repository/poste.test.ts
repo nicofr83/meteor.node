@@ -1,8 +1,9 @@
 import 'reflect-metadata';
 import {Container} from 'typedi';
-import {DB, DBOptions } from "../../../src/tools/db";
-import {Poste} from "../../../src/repository/poste";
-import {PosteData} from '../../../src/repository/poste_interface';
+import { DB } from "../tools/db.js";
+import {DBOptions } from "../../src/tools/db";
+import {Poste} from "./poste.js";
+import {PosteData} from '../repository/poste_interface.js';
 
 const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
 

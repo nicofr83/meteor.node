@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getDumpedPostes } from "../controllers/poste.controller";
+import { getDumpedPostes } from "../controllers/poste.controller.js";
 
 class PosteRoutes {
   router = Router();

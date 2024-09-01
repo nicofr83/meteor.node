@@ -1,10 +1,10 @@
 import 'reflect-metadata';
 import { Container } from 'typedi';
-import {DB, DBOptions} from "../tools/db";
-import {DBLock} from "../tools/enums";
+import {DB, DBOptions} from "../tools/db.js";
+import {DBLock} from "../tools/enums.js";
 import pg from 'pg'
-import {Entity_INT, EntityData} from './entity_interface'
-import {DB_INT} from "../tools/db_interface";
+import {Entity_INT, EntityData} from './entity_interface.js'
+import {DB_INT} from "../tools/db_interface.js";
 
 export class Entity implements Entity_INT{
     private data: EntityData;

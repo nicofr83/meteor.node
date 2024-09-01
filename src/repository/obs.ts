@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import { Service, Container } from 'typedi';
-import { DB, DBOptions } from "../tools/db";
+import { DB, DBOptions } from "../tools/db.js";
 import pg from 'pg'
-import { Entity } from "./entity";
-import { Entity_Child_INT, ObsData } from './obs_interface';
+import { Entity } from "./entity.js";
+import { Entity_Child_INT, ObsData } from './obs_interface.js';
 // import {Code_QA} from '../tools/enums';
 
 @Service({ transient: true })

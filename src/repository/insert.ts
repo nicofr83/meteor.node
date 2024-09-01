@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import { Container } from 'typedi';
-import {DB} from "../tools/db";
+import {DB} from "../tools/db.js";
 import pg from 'pg'
-import {Entity_INT, EntityData} from './entity_interface'
-import {DB_INT} from "../tools/db_interface";
+import {Entity_INT, EntityData} from './entity_interface.js'
+import {DB_INT} from "../tools/db_interface.js";
 
 class insert{
     public async run(): Promise<void> {

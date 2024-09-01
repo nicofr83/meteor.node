@@ -1,5 +1,5 @@
-import {Mesure_INT, MesureData as MData} from '../repository/mesure_interface'
-import {Aggreg_Type} from '../tools/enums';
+import {Mesure_INT, MesureData as MData} from '../repository/mesure_interface.js'
+import {Aggreg_Type} from '../tools/enums.js';
 
 export type MesureData = MData;
 

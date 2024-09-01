@@ -1,4 +1,4 @@
-import { DBOptions } from '../tools/db'
+import { DBOptions } from '../tools/db.js'
 import pg from 'pg'
 
 export interface EntityData{

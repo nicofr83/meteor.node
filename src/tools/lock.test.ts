@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { Container} from 'typedi';
-import {Lock} from "../../../src/tools/lock";
+import {Lock} from "./lock";
 
 const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
 

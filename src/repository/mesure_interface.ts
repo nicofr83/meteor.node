@@ -1,5 +1,5 @@
-import { Entity_Herited_INT, EntityData } from './entity_interface';
-import {Aggreg_Type} from '../tools/enums';
+import { Entity_Herited_INT, EntityData } from './entity_interface.js';
+import {Aggreg_Type} from '../tools/enums.js';
 export type Entity_Child_INT = Entity_Herited_INT;
 
 export interface MesureData extends EntityData{

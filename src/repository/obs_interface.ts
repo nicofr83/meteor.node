@@ -1,8 +1,8 @@
 
 
-import { Entity_Herited_INT, EntityData } from './entity_interface';
+import { Entity_Herited_INT, EntityData } from './entity_interface.js';
 export type Entity_Child_INT = Entity_Herited_INT;
-import {Code_QA} from '../tools/enums';
+import {Code_QA} from '../tools/enums.js';
 
 export interface ObsData extends EntityData{
     date_local: Date|undefined;

@@ -1,7 +1,7 @@
 // tests/calculator.spec.tx
 // Use config/.env.local for tests
 process.env.DOTENV = 'test'
-import "../../../src/tools/config";
+import "./config.js";
 
 const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
 

@@ -1,7 +1,13 @@
-import { RunOnceSvc } from './runOnceSvc';
+import { RunOnceSvc } from './runOnceSvc.js';
 
 class TestRunOnceSvc extends RunOnceSvc {
-    public runMe(data: object): object|undefined {
+    constructor() {
+        console.log('TestRunOnceSvc: constructor');
+        super();
+    }
+    public async runMe(data: object): Promise<object|undefined> {
+        console.log(`TestRunOnceSvc: ${JSON.stringify(data)}`);
         return data;
     }
 }
+new TestRunOnceSvc();

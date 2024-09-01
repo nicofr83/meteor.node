@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { Container} from 'typedi';
-import {DB} from "../../../src/tools/db";
+import {DB} from "./db.js";
 
 const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
 

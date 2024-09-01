@@ -24,6 +24,7 @@ parentPort.on('message', (data) => {
     // console.log(`      Task ${data} activated...`);
     performTask(data);
 });
+console.log('     (worker is alive)');
 // setInterval(() => {
 //   console.log('     (worker is alive)');
 // }, 5000);

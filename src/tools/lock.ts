@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { Service } from 'typedi';
 import * as EventObj from "events";
-import { LockINT } from "./lock_interface";
+import { LockINT } from "./lock_interface.js";
 const EventEmitter = EventObj.EventEmitter;
 
 @Service({ transient: true })

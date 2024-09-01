@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { Container } from 'typedi';
-import { PosteMeteor } from '../metier/poste_meteor';
+import { PosteMeteor } from '../metier/poste_meteor.js';
 import { Request, Response } from "express";
 
 // export function checkMe(req: Request, res: Response): Response{

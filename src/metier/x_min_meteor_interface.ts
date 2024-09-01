@@ -1,4 +1,4 @@
-import {X_Min_INT, X_MinData as IData} from '../repository/x_min_interface'
+import {X_Min_INT, X_MinData as IData} from '../repository/x_min_interface.js'
 
 export type X_MinData = IData;
 

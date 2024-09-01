@@ -1,5 +1,5 @@
 import pg from 'pg'
-import { DBOptions } from './db'
+import { DBOptions } from './db.js'
 
 export interface DB_INT {
     getInstanceCount(): number;

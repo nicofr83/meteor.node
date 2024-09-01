@@ -1,92 +1,141 @@
-import { Worker } from 'worker_threads';
-import {WorkerState} from '../tools/enums';
+import { Container } from 'typedi'
+import { ChildProcess, fork } from'child_process';
+import { MsgFormatIn, MsgFormatOut } from './runOnceSvc_interface.js'
+import { WorkerState, LogType } from '../tools/enums.js';
+import { Log } from '../tools/log.js';
 
 export class RunOnce {
-    private state: WorkerState[] = [];
-    private objectToProcess: Array <{'data': any, 'callback': Function|undefined}> = [];
-    private worker: Worker[] = [];
-    private objectInProcess = [] as (object|undefined)[];
-    private callBackInProcess = [] as (Function|undefined)[];
+    private state: WorkerState;
+    private objectsQueue: Array <{'data': any, 'callback': Function|undefined}> = [];
+    private worker: ChildProcess;
+    private objectInProcess:object|undefined;
+    private callBackInProcess: Function|undefined;
     private taskName: string;
-    private maxInstance: number;
+    private myTimeOut: NodeJS.Timeout|undefined;
+    private myLog: Log;
+    private nbRetries: number = 0;
+    private shutdownChild: boolean = false;
 
-    constructor(filename: string, taskName: string, maxInstance: number = 1, checkTimeOut: number = 2000){
-        // console.log(`MT_RUNONCE: ${filename} ${taskName} ${maxInstance} ${checkTimeOut}`);
-        for (var idx = 0; idx < maxInstance; idx++) {
-            // console.log(`MT_RUNONCE: init worker ${idx}`);
-            this.worker.push(new Worker(filename));
-            this.initializeWorker(this.worker[idx]);
-            this.objectInProcess.push(undefined);
-            this.callBackInProcess.push(undefined);
-            this.state.push(WorkerState.AVAILABLE);
+    constructor(filename: string, taskName: string, timeOut: number = 5000){
+        this.myLog = Container.get(Log);
+        this.myLog.debug('runOnce',`${filename} ${taskName} ${timeOut}`);
+        try {
+            this.worker= fork(filename);
+            this.initializeWorker(this.worker);
+        } catch (error: any) {
+            this.myLog.exception('runOnce', error);
+            process.exit(1);
         }
+        this.objectInProcess = undefined;
+        this.callBackInProcess = undefined;
+        this.state = WorkerState.AVAILABLE;
         this.taskName = taskName;
-        this.maxInstance = maxInstance;
+        this.myTimeOut = undefined;
         setInterval(() => {
             this.checkQueue();
-        }, checkTimeOut);
+        }, 1000);
     }
 
-    private checkQueue() {
-        // Nothing in the waiting list
-        if (this.objectToProcess.length == 0) {
-            return;
-        }
-        var idx = 0;
-        while (idx < this.maxInstance) {
-            if (this.state[idx] == WorkerState.AVAILABLE) {
-                this.state[idx] = WorkerState.RUNNING;
-                var objToLaunch = this.objectToProcess.shift() as any;
-                objToLaunch['data']['slotId'] = idx;
-                this.objectInProcess[idx] = objToLaunch.data;
-                this.callBackInProcess[idx] = objToLaunch.callback;
-                // console.log(`MT_RUNONCE: slot ${idx} starting with ${JSON.stringify(ObjectToProcess.data)}`);           
-                this.worker[idx].postMessage(objToLaunch.data);
-                return;
+    private restartChild() {
+
+        this.shutdownChild = false;
+    }
+    private initializeWorker(myChild: ChildProcess) {
+        myChild.on('message', (dataReturned: MsgFormatOut) => {
+            if (dataReturned.data != undefined) {
+                if (this.myTimeOut != undefined) {
+                    clearTimeout(this.myTimeOut);
+                    this.myTimeOut = undefined;
+                }
+                this.myLog.debug('runOnce', `message received: ${JSON.stringify(dataReturned)}`);
+                this.state = WorkerState.AVAILABLE;
+                this.objectInProcess = undefined;
+                if (this.callBackInProcess != undefined) {
+                    var finalCallback = this.callBackInProcess;
+                    this.callBackInProcess = undefined;
+                    try {
+                        finalCallback(dataReturned.status, dataReturned.data);
+                    } catch (error: any) {
+                        this.myLog.exception('runOnce-callback', error);
+                    }
+                }
+                this.nbRetries = 0;
+                this.checkQueue();
             }
-            idx++;
-        }
-    }
-
-    private initializeWorker(myWorker: Worker) {
-        myWorker.on('message', (message) => {
-            const dataReturned = JSON.parse(message);
-            // console.log(`Task in slot ${dataReturned['slotId']} Done -> received message: ${JSON.stringify(dataReturned)}`);
-            const bStatus = (dataReturned['status'] == 'Task Done')? true: false;
-
-            const idx = dataReturned['slotId'];
-            this.state[idx] = WorkerState.AVAILABLE;
-            this.objectInProcess[idx] = undefined;
-            if (this.callBackInProcess[idx] != undefined) {
-                var finalCallback = this.callBackInProcess[idx];
-                this.callBackInProcess[idx] = undefined;
-                if (bStatus) {
-                    finalCallback(bStatus, (dataReturned.hasOwnProperty('dataCB')) ? dataReturned['dataCB'] : undefined);
-                } else {
-                    finalCallback(bStatus, {'message': dataReturned['message'], 'stack': dataReturned['stack']});
+            if (dataReturned.logMessage != undefined) {
+                const logData = dataReturned.logMessage;
+                switch (logData.type) {
+                    case LogType.INFO:
+                        this.myLog.info(`${dataReturned.source}`, `${logData.message}`);
+                        break;
+                    case LogType.DEBUG:
+                        this.myLog.debug(`${dataReturned.source}`, `${logData.message}`, logData.params == undefined ? {} : logData.params);
+                        break;
+                    case LogType.ERROR:
+                        this.myLog.printLog(logData.type, dataReturned.source, logData.message, {'firstStack': logData.stackLine});
+                        break;
+                    case LogType.EXCEPTION:
+                        this.myLog.printLog(logData.type, dataReturned.source, logData.message, {'stack': logData.stack});
+                        this.restartChild()
+                        return;
                 }
             }
-
-            this.checkQueue();
         });
-        myWorker.on('error', (error) => {
-            console.error(`received error event: ${error}`);
-            setTimeout(() => {
-                process.exit(1);
-            }, 500);
+        myChild.on('error', (error) => {
+            if (this.shutdownChild) {
+                return;
+            }
+            if (this.nbRetries++ > 10) {
+                this.myLog.exception('runOnce', new Error('to many reties, exiting '));
+                this.shutdownChild = true;
+                setTimeout(() => {
+                    process.exit(1);
+                }, 500);
+                return;
+            }
+            this.myLog.exception('runOnce', error);
+            this.restartChild();
         });
-        myWorker.on('exit', (code) => {
-            console.log(`Exception received exit event, task ${code}`);
-            setTimeout(() => {
-                process.exit(1);
-            }, 500);
+        myChild.on('exit', (code) => {
+            if (this.shutdownChild) {
+                return;
+            }
+            if (this.nbRetries++ > 10) {
+                this.myLog.exception('runOnce', new Error('to many reties, exiting '));
+                this.shutdownChild = true;
+                setTimeout(() => {
+                    process.exit(1);
+                }, 500);
+                return;
+            }
+            this.myLog.error('runOnce', new Error('child process exited with code ' + code));
+            this.restartChild();
         });
-        // myWorker.on('offline', () => {
-        //     console.log(`received offLine event`);
-        // });
     }
+    private checkQueue() {
+        // Nothing in the waiting list
+        if (this.objectsQueue == undefined) {
+            console.log(`MT_RUNONCE: nothing in the waiting list`);
+            return;
+        }
+
+        if (this.state == WorkerState.AVAILABLE) {
+            this.state = WorkerState.RUNNING;
+            var objToLaunch = this.objectsQueue.shift() as any;
+            this.objectInProcess= objToLaunch.data;
+            this.callBackInProcess = objToLaunch.callback;
+            this.myLog.debug('runOnce', `job starting with ${JSON.stringify(objToLaunch.data)}`);
+            this.worker.send(objToLaunch.data);
+            this.myLog.debug('runOnce', `message sent`);
+            this.shutdownChild = false;
+            this,this.nbRetries = 0;
+            return;
+        }
+    }
+
     public addJob(obj: object, callBack: (Function|undefined) = undefined) {
-        this.objectToProcess.push({'data': obj, 'callback': callBack});
+        this.myLog.debug('runOnce', `addJob: ${JSON.stringify(obj)}`);
+        this.objectsQueue.push({'data': obj, 'callback': callBack});
         this.checkQueue();
     }
 }

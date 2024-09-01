@@ -1,4 +1,4 @@
-import { Entity_Herited_INT, EntityData } from './entity_interface';
+import { Entity_Herited_INT, EntityData } from './entity_interface.js';
 export type Entity_Child_INT = Entity_Herited_INT;
 
 

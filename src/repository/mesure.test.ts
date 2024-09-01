@@ -1,8 +1,9 @@
 import 'reflect-metadata';
 import {Container} from 'typedi';
-import {DB, DBOptions } from "../../../src/tools/db";
-import {Mesure} from "../../../src/repository/mesure";
-import {MesureData} from '../../../src/repository/mesure_interface';
+import { DB } from "../tools/db.js";
+import {DBOptions } from "../../src/tools/db"
+import {Mesure} from "./mesure.js";
+import {MesureData} from './mesure_interface';
 
 const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
 
@@ -12,7 +13,7 @@ describe("Mesure test", () => {
         expect(myMesure.getData().id).toEqual(1);
     }, 700 * SECONDS);
     it("getColumnsName getOne with cxion", async () => {
-        const db = Container.get(DB);
+        const db = Container.get(DB) as DB;
         const pgConn = await db.beginTransaction();
         const myMesure = await Mesure.getOne(pgConn, {'where': 'id = 1'} as DBOptions);
         await db.commitTransaction(pgConn);
@@ -29,7 +30,7 @@ describe("Mesure test", () => {
         expect(allMesures[0].id).toEqual(1);
     }, 700 * SECONDS);
     it("updateAll commit", async () => {
-        const db = Container.get(DB);
+        const db = Container.get(DB) as DB;
         const pgConn = await db.beginTransaction();
         var myMesure = await Mesure.getOne(pgConn, {'where': 'id = 1'} as DBOptions);
         var allow_zero = myMesure.getData().allow_zero;
@@ -48,7 +49,7 @@ describe("Mesure test", () => {
         expect(new_allow_zero).toEqual(!allow_zero);
     }, 700 * SECONDS);
     it("updateMe rollback", async () => {
-        const db = Container.get(DB);
+        const db = Container.get(DB) as DB;
         const pgConn = await db.beginTransaction();
         var myMesure = await Mesure.getOne(pgConn, {'where': 'id = 1'} as DBOptions);
         var allow_zero = myMesure.getData().allow_zero;
@@ -62,7 +63,7 @@ describe("Mesure test", () => {
     }, 700 * SECONDS);
 
     it("updateAll rollback", async () => {
-        const db = Container.get(DB);
+        const db = Container.get(DB) as DB;
         const pgConn = await db.beginTransaction();
         var myMesure = await Mesure.getOne(pgConn, {'where': 'id = 1'} as DBOptions);
         var allow_zero = myMesure.getData().allow_zero;
@@ -74,7 +75,7 @@ describe("Mesure test", () => {
         expect(myMesure.getData().allow_zero).toEqual(allow_zero);
     }, 700 * SECONDS);
     it("deleteAll rollback", async () => {
-        const db = Container.get(DB);
+        const db = Container.get(DB) as DB;
         const pgConn = await db.beginTransaction();
         var myMesure = new Mesure();
         var deletedKeys = await myMesure.deleteAll(pgConn, {'where': 'id in (1, 2)'} as DBOptions);
@@ -83,7 +84,7 @@ describe("Mesure test", () => {
     }, 700 * SECONDS);
 
     it("deleteMe rollback", async () => {
-        const db = Container.get(DB);
+        const db = Container.get(DB) as DB;
         const pgConn = await db.beginTransaction();
         var myMesure = await Mesure.getOne(pgConn, {'where': 'id = 1'} as DBOptions);
         var deletedKeys = await myMesure.deleteMe(pgConn);
@@ -91,7 +92,7 @@ describe("Mesure test", () => {
         expect((deletedKeys as any).id).toEqual(1);
     }, 700 * SECONDS);
    it("insert rollback", async () => {
-        const db = Container.get(DB);
+        const db = Container.get(DB) as DB;
         const pgConn = await db.beginTransaction();
         var myMesure = await Mesure.getOne(pgConn, {'where': 'id = 1'} as DBOptions);
         myMesure.setData({'name': 'test Mesure', id: undefined} as MesureData);

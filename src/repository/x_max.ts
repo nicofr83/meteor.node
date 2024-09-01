@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import { Service, Container} from 'typedi';
-import {DB, DBOptions} from "../tools/db";
+import {DB, DBOptions} from "../tools/db.js";
 import pg from 'pg'
-import {Entity} from "./entity";
-import {Entity_Child_INT, X_MaxData} from './x_max_interface';
+import {Entity} from "./entity.js";
+import {Entity_Child_INT, X_MaxData} from './x_max_interface.js';
 
 @Service({ transient: true })
 export class X_Max extends Entity implements Entity_Child_INT{

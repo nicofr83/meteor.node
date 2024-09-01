@@ -1,4 +1,4 @@
-import { PosteMeteor } from '../../../src/metier/poste_meteor';
+import { PosteMeteor } from "./poste_meteor.js";
 
 const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
 

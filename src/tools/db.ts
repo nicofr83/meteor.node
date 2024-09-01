@@ -1,8 +1,8 @@
 import 'reflect-metadata';
 import { Service } from 'typedi';
-import { DBLock } from './enums';
+import { DBLock } from './enums.js';
 import pg from 'pg'
-import {DB_INT} from './db_interface'
+import {DB_INT} from './db_interface.js'
 
 export interface DBOptions {
     columns: string|string[]|undefined;

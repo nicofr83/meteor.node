@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import { Service, Container} from 'typedi';
-import {DB, DBOptions} from "../tools/db";
+import {DB, DBOptions} from "../tools/db.js";
 import pg from 'pg'
-import {Entity} from "./entity";
-import {Entity_Child_INT, IncidentData} from './incident_interface';
+import {Entity} from "./entity.js";
+import {Entity_Child_INT, IncidentData} from './incident_interface.js';
 
 @Service({ transient: true })
 export class Incident extends Entity implements Entity_Child_INT{
@@ -37,7 +37,7 @@ export class Incident extends Entity implements Entity_Child_INT{
             var my_Incident = new Incident()
             const allData = await my_Incident.getDBData(pgconn, dbOptions);
             for (const a_data of allData) {
-                my_Incident = new Incident(a_data as IncidentData)
+                my_Incident = new Incident(a_data as IncidentData);
                 all_Incidents.push(my_Incident);
             }
             return all_Incidents;

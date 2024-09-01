@@ -12,14 +12,14 @@ export enum Code_QA {
     VALIDATED = 1,
     UNVALIDATED = 9
 }
-export enum Data_Source{
+export enum DataSource{
     NONE = 0,
     METEOR_OI = 1,
     METEO_FR = 2,
     OVPF = 3
 }
 
-export enum Load_Type{
+export enum LoadType{
     NONE = 0,
     LOAD_FROM_DUMP = 1,
     LOAD_FROM_JSON = 2,
@@ -37,4 +37,11 @@ export enum DBLock{
 export enum WorkerState {
     AVAILABLE = 0,
     RUNNING = 1,
+}
+
+export enum LogType {
+    INFO = 'INFO',
+    DEBUG = 'DEBUG',
+    ERROR = 'ERROR',
+    EXCEPTION = 'EXCEPTION',
 }
