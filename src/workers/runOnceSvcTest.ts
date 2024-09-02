@@ -1,12 +1,13 @@
 import { RunOnceSvc } from './runOnceSvc.js';
+import { LogType } from '../tools/enums.js';
 
 class TestRunOnceSvc extends RunOnceSvc {
     constructor() {
-        console.log('TestRunOnceSvc: constructor');
         super();
+        this.name = __filename;
     }
     public async runMe(data: object): Promise<object|undefined> {
-        console.log(`TestRunOnceSvc: ${JSON.stringify(data)}`);
+        this.log(LogType.INFO, `in SvcTest : ${JSON.stringify(data)}`);
         return data;
     }
 }

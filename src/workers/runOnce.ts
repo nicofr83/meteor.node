@@ -7,6 +7,7 @@ import { Log } from '../tools/log.js';
 export class RunOnce {
     private state: WorkerState;
     private objectsQueue: Array <{'data': any, 'callback': Function|undefined}> = [];
+    // @ts-ignore
     private worker: ChildProcess;
     private objectInProcess:object|undefined;
     private callBackInProcess: Function|undefined;
@@ -15,31 +16,77 @@ export class RunOnce {
     private myLog: Log;
     private nbRetries: number = 0;
     private shutdownChild: boolean = false;
+    private restartTimeOut: NodeJS.Timeout|undefined;
+    private timeOut: number;
+    private filename: string;
 
     constructor(filename: string, taskName: string, timeOut: number = 5000){
         this.myLog = Container.get(Log);
         this.myLog.debug('runOnce',`${filename} ${taskName} ${timeOut}`);
+        this.filename = filename;
+        this.taskName = taskName;
+        this.state = WorkerState.AVAILABLE;
+        this.timeOut = timeOut;
+        this.objectsQueue = new (Array <{'data': any, 'callback': Function|undefined}>);
+
+        this.startChild();
+
+        // Check every second if the queue is empty
+        setInterval(() => {
+            this.checkQueue();
+        }, 1000);
+    }
+
+    private stopChild(): void {
         try {
-            this.worker= fork(filename);
+            this.state = WorkerState.RESTARING;
+            const shutdownRequest: MsgFormatIn = {
+                'shutdown': true,
+                'data': undefined
+            };
+            this.worker.send(shutdownRequest);
+            this.restartTimeOut = setTimeout(() => {
+                this.worker.kill();
+                setTimeout(() => {
+                    this.startChild();
+                });
+            });
+        }
+        catch (error: any) {
+            this.myLog.exception('runOnce', error);
+            // try {
+            //     this.worker.kill();
+            // } catch(error: any) {
+            //     this.myLog.exception('runOnce', error);
+            //     process.exit(1);
+            // }
+        }
+    }
+
+    private startChild(): void{
+        try {
+            if (this.restartTimeOut != undefined) {
+                clearTimeout(this.restartTimeOut);
+            }
+            this.worker= fork(this.filename);
             this.initializeWorker(this.worker);
-        } catch (error: any) {
+        }
+        catch (error: any) {
             this.myLog.exception('runOnce', error);
             process.exit(1);
         }
         this.objectInProcess = undefined;
         this.callBackInProcess = undefined;
         this.state = WorkerState.AVAILABLE;
-        this.taskName = taskName;
-        this.myTimeOut = undefined;
-        setInterval(() => {
-            this.checkQueue();
-        }, 1000);
-    }
-
-    private restartChild() {
-
+        this.restartTimeOut = undefined;
+        this.nbRetries = 0;
         this.shutdownChild = false;
+        this.myTimeOut = setTimeout(() => {
+            this.myLog.error('runOnce', new Error('timeout on child process: ' + this.taskName));
+            this.stopChild();
+        }, 5000);
     }
+
     private initializeWorker(myChild: ChildProcess) {
         myChild.on('message', (dataReturned: MsgFormatOut) => {
             if (dataReturned.data != undefined) {
@@ -73,10 +120,12 @@ export class RunOnce {
                         break;
                     case LogType.ERROR:
                         this.myLog.printLog(logData.type, dataReturned.source, logData.message, {'firstStack': logData.stackLine});
+                        this.myLog.debug('runOnce', 'data of failed job: ' + JSON.stringify(this.objectInProcess));
                         break;
                     case LogType.EXCEPTION:
                         this.myLog.printLog(logData.type, dataReturned.source, logData.message, {'stack': logData.stack});
-                        this.restartChild()
+                        this.myLog.debug('runOnce', 'data of failed job: ' + JSON.stringify(this.objectInProcess));
+                        this.stopChild();
                         return;
                 }
             }
@@ -85,16 +134,17 @@ export class RunOnce {
             if (this.shutdownChild) {
                 return;
             }
-            if (this.nbRetries++ > 10) {
-                this.myLog.exception('runOnce', new Error('to many reties, exiting '));
-                this.shutdownChild = true;
-                setTimeout(() => {
-                    process.exit(1);
-                }, 500);
-                return;
-            }
+            // if (this.nbRetries++ > 10) {
+            //     this.myLog.exception('runOnce', new Error('to many reties, exiting '));
+            //     this.shutdownChild = true;
+            //     setTimeout(() => {
+            //         process.exit(1);
+            //     }, 500);
+            //     return;
+            // }
+            this.shutdownChild = true;
             this.myLog.exception('runOnce', error);
-            this.restartChild();
+            this.stopChild();
         });
         myChild.on('exit', (code) => {
             if (this.shutdownChild) {
@@ -109,13 +159,12 @@ export class RunOnce {
                 return;
             }
             this.myLog.error('runOnce', new Error('child process exited with code ' + code));
-            this.restartChild();
+            this.stopChild();
         });
     }
     private checkQueue() {
         // Nothing in the waiting list
-        if (this.objectsQueue == undefined) {
-            console.log(`MT_RUNONCE: nothing in the waiting list`);
+        if (this.objectsQueue.length == 0) {
             return;
         }
 

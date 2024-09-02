@@ -1,5 +1,6 @@
 // import {describe, expect, test} from '@jest/globals';
 import request from "supertest";
+import {expect} from '@jest/globals';
 import app from "./app.js";
 
 describe("API server endpoints", () => {

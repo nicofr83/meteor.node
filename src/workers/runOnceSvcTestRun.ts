@@ -2,7 +2,7 @@ import {RunOnce} from "./runOnce.js";
 
 var mt_once: RunOnce;
 try{
-    mt_once = new RunOnce('./runOnceSvcTest.js', 'runOnceSvc', 1000);
+    mt_once = new RunOnce('./dist/workers/runOnceSvcTest.js', 'runOnceSvc', 1000);
 } catch (error) {
     console.error(`MT_RUNONCE: ${error}`);
     process.exit(1);
