@@ -1,21 +1,35 @@
 import {RunOnce} from "./runOnce.js";
+import {LogData} from "./runOnceSvc_interface.js";
 
 var mt_once: RunOnce;
 try{
-    mt_once = new RunOnce('./dist/workers/runOnceSvcTest.js', 'runOnceSvc', 1000);
+    mt_once = new RunOnce('./dist/workers/runOnceSvcTest.js', 'runOnceSvc', true, -1);
 } catch (error) {
     console.error(`MT_RUNONCE: ${error}`);
     process.exit(1);
 }
 
 var ret = undefined as any;
-function cb(dataCB: any) {
-    console.log(`runOnceSvcTestRun cb data: ${JSON.stringify(dataCB)}`);
+var cbCount = 1;
+
+function cb(status: boolean, dataCB: any, logMsg: LogData, request: any) {
+    console.log('---------------------------------------------------------------------------------');
+    if (status) {
+        console.log(` -> runOnceSvcTestRun cb ${cbCount} status: ${status} data: ${JSON.stringify(dataCB)}`);
+    } else {
+            console.log(` -> ERROR: logMsg: ${logMsg.message}`);
+    }
+    console.log(`    request: ${JSON.stringify(request)}`);
+    console.log('---------------------------------------------------------------------------------\n');
+    cbCount++;
+
+    setInterval(() => {
+        if (cbCount >= 10) {
+            process.exit(0);
+        }
+    }, 500);
 }
-mt_once.addJob({'my_data': 'test 1'}, cb);
-mt_once.addJob({'my_data': 'test 2'}, cb);
-mt_once.addJob({'my_data': 'test 3'}, cb);
-mt_once.addJob({'my_data': 'test 4'}, cb);
-setInterval(() => {
-    console.log('runOnceSvcTestRun timeout');
-}, 30000);
+
+for (var i = 1; i < 10; i++) {
+    mt_once.addJob({'my_data': 'test ' + i, 'id': i}, cb);
+}

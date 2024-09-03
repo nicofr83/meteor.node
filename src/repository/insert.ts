@@ -17,9 +17,8 @@ class insert{
         //     const ret = await instance.query(pgConn, sql, a_value);
         //     console.dir(ret);
         // }
-            const ret = await instance.query(pgConn, sql, values);
-            console.dir(ret);
-
+        const ret = await instance.query(pgConn, sql, values);
+        // console.dir(ret);
     }
 }
 (async() => {

@@ -19,8 +19,9 @@ export class RunOnce {
     private restartTimeOut: NodeJS.Timeout|undefined;
     private timeOut: number;
     private filename: string;
+    private bStayOnline: boolean;
 
-    constructor(filename: string, taskName: string, timeOut: number = 5000){
+    constructor(filename: string, taskName: string, stayOnline: boolean = true, timeOut: number = 5000){
         this.myLog = Container.get(Log);
         this.myLog.debug('runOnce',`${filename} ${taskName} ${timeOut}`);
         this.filename = filename;
@@ -28,6 +29,7 @@ export class RunOnce {
         this.state = WorkerState.AVAILABLE;
         this.timeOut = timeOut;
         this.objectsQueue = new (Array <{'data': any, 'callback': Function|undefined}>);
+        this.bStayOnline = stayOnline;
 
         this.startChild();
 
@@ -42,6 +44,7 @@ export class RunOnce {
             this.state = WorkerState.RESTARING;
             const shutdownRequest: MsgFormatIn = {
                 'shutdown': true,
+                'longlife': this.bStayOnline,
                 'data': undefined
             };
             this.worker.send(shutdownRequest);
@@ -81,54 +84,54 @@ export class RunOnce {
         this.restartTimeOut = undefined;
         this.nbRetries = 0;
         this.shutdownChild = false;
-        this.myTimeOut = setTimeout(() => {
-            this.myLog.error('runOnce', new Error('timeout on child process: ' + this.taskName));
-            this.stopChild();
-        }, 5000);
+        if (this.timeOut > 0) {
+            this.myTimeOut = setTimeout(() => {
+                this.myLog.error('runOnce', new Error('timeout on child process: ' + this.taskName));
+                this.stopChild();
+            }, 5000);
+        }
     }
 
     private initializeWorker(myChild: ChildProcess) {
-        myChild.on('message', (dataReturned: MsgFormatOut) => {
-            if (dataReturned.data != undefined) {
-                if (this.myTimeOut != undefined) {
-                    clearTimeout(this.myTimeOut);
-                    this.myTimeOut = undefined;
-                }
-                this.myLog.debug('runOnce', `message received: ${JSON.stringify(dataReturned)}`);
-                this.state = WorkerState.AVAILABLE;
-                this.objectInProcess = undefined;
-                if (this.callBackInProcess != undefined) {
-                    var finalCallback = this.callBackInProcess;
-                    this.callBackInProcess = undefined;
-                    try {
-                        finalCallback(dataReturned.status, dataReturned.data);
-                    } catch (error: any) {
-                        this.myLog.exception('runOnce-callback', error);
-                    }
-                }
-                this.nbRetries = 0;
-                this.checkQueue();
+        myChild.on('message', (dataReturnedMsg: MsgFormatOut) => {
+            const dataReturned = dataReturnedMsg.data as MsgFormatOut;
+            if (this.myTimeOut != undefined) {
+                clearTimeout(this.myTimeOut);
+                this.myTimeOut = undefined;
             }
-            if (dataReturned.logMessage != undefined) {
-                const logData = dataReturned.logMessage;
+            this.myLog.debug('runOnce', `message received: ${JSON.stringify(dataReturned)}`);
+            this.state = WorkerState.AVAILABLE;
+            if (this.callBackInProcess != undefined) {
+                var finalCallback = this.callBackInProcess;
+                this.callBackInProcess = undefined;
+                try {
+                    finalCallback(dataReturnedMsg.status, dataReturned, dataReturnedMsg.logMessage, this.objectInProcess);
+                } catch (error: any) {
+                    this.myLog.exception('runOnce-callback', error);
+                }
+
+                this.objectInProcess = undefined;
+                this.nbRetries = 0;
+            }
+            if (dataReturnedMsg.logMessage != undefined) {
+                const logData = dataReturnedMsg.logMessage;
                 switch (logData.type) {
                     case LogType.INFO:
-                        this.myLog.info(`${dataReturned.source}`, `${logData.message}`);
+                        this.myLog.info(`${dataReturnedMsg.source}`, `${logData.message}`);
                         break;
                     case LogType.DEBUG:
-                        this.myLog.debug(`${dataReturned.source}`, `${logData.message}`, logData.params == undefined ? {} : logData.params);
+                        this.myLog.debug(`${dataReturnedMsg.source}`, `${logData.message}`, logData.params == undefined ? {} : logData.params);
                         break;
                     case LogType.ERROR:
-                        this.myLog.printLog(logData.type, dataReturned.source, logData.message, {'firstStack': logData.stackLine});
+                        this.myLog.printLog(logData.type, dataReturnedMsg.source, logData.message, {'firstStack': logData.stackLine});
                         this.myLog.debug('runOnce', 'data of failed job: ' + JSON.stringify(this.objectInProcess));
                         break;
                     case LogType.EXCEPTION:
-                        this.myLog.printLog(logData.type, dataReturned.source, logData.message, {'stack': logData.stack});
+                        this.myLog.printLog(logData.type, dataReturnedMsg.source, logData.message, {'stack': logData.stack});
                         this.myLog.debug('runOnce', 'data of failed job: ' + JSON.stringify(this.objectInProcess));
-                        this.stopChild();
-                        return;
                 }
             }
+            this.checkQueue();
         });
         myChild.on('error', (error) => {
             if (this.shutdownChild) {
@@ -174,10 +177,17 @@ export class RunOnce {
             this.objectInProcess= objToLaunch.data;
             this.callBackInProcess = objToLaunch.callback;
             this.myLog.debug('runOnce', `job starting with ${JSON.stringify(objToLaunch.data)}`);
-            this.worker.send(objToLaunch.data);
+
+            const jobRequest: MsgFormatIn = {
+                'shutdown': false,
+                'longlife': this.bStayOnline,
+                'data': objToLaunch.data
+            };
+            this.worker.send(jobRequest);
+
             this.myLog.debug('runOnce', `message sent`);
             this.shutdownChild = false;
-            this,this.nbRetries = 0;
+            this.nbRetries = 0;
             return;
         }
     }

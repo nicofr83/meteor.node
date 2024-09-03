@@ -1,46 +1,42 @@
 // worker.ts
 import {LogType} from '../tools/enums.js';
 
-export interface DataFormatIn {
-}
-export interface DataFormatOut {
 
-}
-export interface LogMessage extends DataFormatOut {
+export interface LogMessage {
     type: LogType.INFO;
     message: string;
 }
-export interface LogDebug extends DataFormatOut{
+export interface LogDebug {
     type: LogType.DEBUG;
     message: string;
     params: object|undefined;
 }
-export interface LogError extends DataFormatOut{
+export interface LogError {
     type: LogType.ERROR
     message: string;
     stackLine: string;
 }
-export interface LogException extends DataFormatOut{
+export interface LogException {
     type: LogType.EXCEPTION
     message: string;
-    stack: string[];
+    stack: string;
 }
 
 export type LogData = LogMessage | LogDebug | LogError | LogException;
 
 export interface MsgFormatIn {
     shutdown: boolean;
-    data: DataFormatIn | undefined;
+    longlife: boolean;
+    data: object | undefined;
 }
 export interface MsgFormatOut {
     status: boolean;
     source: string;
-    message: object | undefined;
-    logMessage: LogData|undefined;
-    data: DataFormatOut | undefined;
+    logMessage: LogData | undefined;
+    data: object | undefined;
 }
 
 export interface RunOnceSvcInt {
-    runMe(data: object): Promise<object|undefined>;
+    runMe(data: any): Promise<object|undefined>;
     log(type: LogType, message: string): void;
 }

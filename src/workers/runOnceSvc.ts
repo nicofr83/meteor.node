@@ -1,4 +1,4 @@
-import { RunOnceSvcInt, MsgFormatIn, MsgFormatOut, LogException } from './runOnceSvc_interface.js';
+import { RunOnceSvcInt, MsgFormatIn, MsgFormatOut, LogException, LogDebug, LogMessage } from './runOnceSvc_interface.js';
 import { LogType } from '../tools/enums.js';
 
 export abstract class RunOnceSvc implements RunOnceSvcInt {
@@ -10,14 +10,14 @@ export abstract class RunOnceSvc implements RunOnceSvcInt {
         //     console.log("child: NICO :" + process.env.NICO)
         
         //   });
-        process.on('message', async (data: MsgFormatIn) => {
+        process.on('message', async (msgIn: MsgFormatIn) => {
             if (process.env.DEBUG) {
                 this.log(LogType.DEBUG, 'RunOnceSvc: message received');
             }
-            if (data.shutdown) {
+            if (msgIn.shutdown) {
                 process.exit(1);
             }
-            await this.performTask(data);
+            await this.performTask(msgIn);
         });
         process.on('error', (error: Error) => {
             process.exit(1);
@@ -34,33 +34,38 @@ export abstract class RunOnceSvc implements RunOnceSvcInt {
         const debugMsg = {
             'status': true,
             'source': this.name,
+            'data': undefined,
             'logMessage': {
                 'type':type,
                 'message': message
-            }
+            } as LogMessage,
         } as MsgFormatOut;
 
         (process as any).send(debugMsg);
     }
     public async performTask(data: MsgFormatIn): Promise<void> {
+        if (data == undefined) {
+            return;
+        }
         const msgBack = {
             'status': true,
             'source': this.name,
-            'message': undefined,
+            'data': undefined,
             'logMessage': undefined
         } as MsgFormatOut;
     
         try {
-            msgBack.message = await this.runMe(data);
+            msgBack.data = await this.runMe(data.data);
     
             if (process.env.DEBUG) {
                 const debugMsg = {
                     'status': true,
                     'source': this.name,
+                    'data': undefined,
                     'logMessage': {
                         'type': LogType.DEBUG,
                         'message': 'job done: ' + JSON.stringify(msgBack)
-                    }
+                    } as LogDebug,
                 } as MsgFormatOut;    
                 (process as any).send(debugMsg);
             }
@@ -68,29 +73,15 @@ export abstract class RunOnceSvc implements RunOnceSvcInt {
         }
         catch (error: any) {
             msgBack.status = false;
-            msgBack.message = {
+            msgBack.logMessage = {
                 type: LogType.EXCEPTION,
-                message: error.name,
-                stack: error.stack.split('\n')
+                message: error.message,
+                stack: error.stack
             } as LogException;
-            (process as any).send(JSON.stringify(msgBack));
+            (process as any).send(msgBack);
         } 
     }
-    public async runMe(data: object): Promise<object|undefined> {
-        const myErr = new Error('Method not implemented.');
-        const msgBack = {
-            'status': false,
-            'source': this.name,
-            'message': {
-                'type': LogType.EXCEPTION,
-                'message': myErr.name,
-                'stack': myErr.stack?.split('\n')
-            } as LogException,
-        } as MsgFormatOut;
-        (process as any).send(JSON.stringify(msgBack));
-        setTimeout(() => {
-            process.exit(1);
-        }, 200);
-        return undefined;
+    public async runMe(data: any): Promise<object|undefined> {
+        throw new Error('Method not implemented.');
     }
 }

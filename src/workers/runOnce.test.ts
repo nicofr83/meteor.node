@@ -1,15 +1,15 @@
 import {RunOnce} from "./runOnce.js";
 
 const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
-console.log("runOnce Test Starting");
+// console.log("runOnce Test Starting");
 var mt_once: RunOnce;
 try{
-    mt_once = new RunOnce('./dist/workers/runOnceSvcTest.js', 'runOnceSvcTest', 1000);
+    mt_once = new RunOnce('./dist/workers/runOnceSvcTest.js', 'runOnceSvcTest', true, 1000);
 } catch (error) {
-    console.error(`MT_RUNONCE: ${error}`);
+    // console.error(`MT_RUNONCE: ${error}`);
     process.exit(1);
 }
-console.log("runOnce Test Started");
+// console.log("runOnce Test Started");
 
 describe("RunOnce Tests", () => {
 
