@@ -150,7 +150,7 @@ export class RunOnce {
                         this.myLog.debug('runOnce', 'data of failed job: ' + JSON.stringify(this.objectInProcess));
                 }
             }
-            if (this.bStayOnline) {
+            if (!this.bStayOnline) {
                 this.stopChild();
             }
             this.checkQueue();

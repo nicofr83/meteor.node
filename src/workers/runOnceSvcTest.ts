@@ -15,12 +15,12 @@ class TestRunOnceSvc extends RunOnceSvc {
         return new Promise<object|undefined>((f, reject) => {
             setTimeout(() => {
                 try {
-                    console.log('i = ' + JSON.stringify(data) + ', i = ' + data['id']);
-                    if ((data['id']) % 7 == 0) {
-                        console.log('throwing error ' + data['id']);
-                        throw new Error('TestRunOnceSvc ' + data['id']);
-                    }
-                    f({'returedData': {'count': this.count}});
+                    console.log('     runOnceTest: i = '  + data['id'] + ', data: ' + JSON.stringify(data));
+                    // if ((data['id']) % 7 == 0) {
+                    //     console.log('throwing error ' + data['id']);
+                    //     throw new Error('TestRunOnceSvc ' + data['id']);
+                    // }
+                    f({'returnedData': {'count': this.count}});
                 } catch (error) {
                     reject(error);
                 }

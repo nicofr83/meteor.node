@@ -3,7 +3,7 @@ import {LogData} from "./runOnceSvc_interface.js";
 
 var mt_once: RunOnce;
 try{
-    mt_once = new RunOnce('./dist/workers/runOnceSvcTest.js', 'runOnceSvc', true, -1);
+    mt_once = new RunOnce('./dist/workers/runOnceSvcTest.js', 'runOnceSvc', false, -1);
 } catch (error) {
     console.error(`MT_RUNONCE: ${error}`);
     process.exit(1);
