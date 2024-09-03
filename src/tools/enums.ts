@@ -37,7 +37,9 @@ export enum DBLock{
 export enum WorkerState {
     AVAILABLE = 0,
     RUNNING = 1,
-    RESTARING = 2,
+    STOPPING = 2,
+    STOPPED = 3,
+    RESTARING = 4,
 }
 
 export enum LogType {

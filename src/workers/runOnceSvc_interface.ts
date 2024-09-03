@@ -26,7 +26,6 @@ export type LogData = LogMessage | LogDebug | LogError | LogException;
 
 export interface MsgFormatIn {
     shutdown: boolean;
-    longlife: boolean;
     data: object | undefined;
 }
 export interface MsgFormatOut {
