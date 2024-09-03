@@ -1,15 +1,12 @@
 import { RunOnceSvcInt, MsgFormatIn, MsgFormatOut, LogException, LogDebug, LogMessage } from './runOnceSvc_interface.js';
 import { LogType } from '../tools/enums.js';
+import dotenv from "dotenv"
 
 export abstract class RunOnceSvc implements RunOnceSvcInt {
     public name: string = 'RunOnceSvc';
 
     constructor() {
-        // process.on('message', (msg: any) => {
-        //     console.log('Message from parent:', msg);
-        //     console.log("child: NICO :" + process.env.NICO)
-        
-        //   });
+        dotenv.config({path: './config/.env.local'});
         process.on('message', async (msgIn: MsgFormatIn) => {
             if (process.env.DEBUG) {
                 this.log(LogType.DEBUG, 'RunOnceSvc: message received');

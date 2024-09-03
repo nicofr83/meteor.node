@@ -1,0 +1,16 @@
+{
+    "extends": "@tsconfig/node20/tsconfig.json",
+    "compilerOptions": {
+      "outDir": ".",
+      "sourceMap": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      // "forceConsistentCasingInFileNames": true
+    },
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowImportingTsExtensions": true,
+    "include": ["."],
+    "exclude": ["node_modules"]
+  }
+  

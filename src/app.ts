@@ -5,7 +5,7 @@ import MyRoutes from "./routes/index.js"
 
 const app: Application = express();
 
-dotenv.config()
+dotenv.config({path: './config/.env.local'});
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

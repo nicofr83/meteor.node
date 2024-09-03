@@ -1,0 +1,22 @@
+{
+    "name": "multi-threading-test",
+    "version": "0.1.0",
+    "description": "",
+    "main": "main.js",
+    "compilerOptions": {
+        "module": "NodeNext"
+    },
+    "scripts": {
+        "start": "tsc; node main.js"
+    },
+    "author": "Nicolas Cuvillier (2024)",
+    "license": "ISC",
+    "dependencies": {
+        "@tsconfig/node20": "^20.1.4",
+        "@types/node": "^22.3.0",
+        "dotenv": "^16.4.5",
+        "node-watch": "^0.7.4",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.5.4"
+    }
+}
