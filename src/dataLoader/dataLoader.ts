@@ -1,11 +1,17 @@
+import 'reflect-metadata';
+import { Service } from 'typedi';
 import { DataStations, DataOneStation, DataMin, DataMax } from "./dataLoader_interface";
 
-class DataLoader{
+@Service({transient: true})
+export class DataLoader{
     constructor() {
 
     }
 
-    public async load(data: DataStations|DataOneStation, dataMin: Array<DataMin>, dataMax: Array<DataMax>): Promise<void>{
+    public async load(
+        data: DataStations|DataOneStation,
+        dataMin: Array<DataMin>=Array<DataMin>(),
+        dataMax: Array<DataMax> = new Array<DataMax>()): Promise<void>{
 
         // Add current values and min/max from data to dataMin/dataMax, and min/max from data
 

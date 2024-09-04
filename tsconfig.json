@@ -5,8 +5,8 @@
     "sourceMap": true,
     // "esModuleInterop": true,
     "skipLibCheck": true,
-    "moduleResolution": "NodeNext",
-    "module":"NodeNext",
+    "moduleResolution": "Node16",
+    "module":"Node16",
     // "forceConsistentCasingInFileNames": true
   },
   "emitDecoratorMetadata": true,

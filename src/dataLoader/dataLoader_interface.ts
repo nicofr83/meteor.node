@@ -110,8 +110,8 @@ export interface DataJson {
 
 export interface DataOneStation {
     meteor: string;
-    info: DataInfo;
-    data: DataJson[];
+    // info: DataInfo;
+    data: Array<DataJson>;
 }
 
 export type DataStations = DataOneStation[];
