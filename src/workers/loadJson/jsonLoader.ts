@@ -4,7 +4,7 @@ import { DataStations } from "../../dataLoader/dataLoader_interface";
 import { Log } from '../../tools/log.js';
 import { DataLoader } from '../../dataLoader/dataLoader';
 import fs from "fs";
-import { json } from 'body-parser';
+import { checkJson } from './jsonValidator';
 
 @Service({transient: true})
 export class JsonLoader{
@@ -29,6 +29,7 @@ export class JsonLoader{
                 throw new Error(`error reading file: ${filename}`);
             }
             this.dataSations = JSON.parse(fileData) as DataStations;
+            checkJson(this.dataSations, filename);
             this.myLog.debug('jsonLoader', `data loaded from: ${filename}`);
             return this.dataSations;
         });

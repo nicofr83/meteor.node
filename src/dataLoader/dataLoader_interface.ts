@@ -14,6 +14,7 @@ export interface DataJson {
     stop_dat: Date;
     duration: number;
     valeurs: {
+        [key: string]: string|Date|number|undefined;
         barometer: number|undefined;
         barometer_avg: number|undefined;
         barometer_max_time: string|Date|undefined;
@@ -55,6 +56,7 @@ export interface DataJson {
         extra_temp3: number|undefined;
         extra_temp3_avg: number|undefined;
 
+        // ?? hail_sum or hail_s
         hail: number|undefined;
         hail_sum: number|undefined;
 
@@ -121,7 +123,7 @@ export interface DataJson {
         radiation_min_time: string|Date|undefined;
         radiation_min: number|undefined;
 
-        // ?? radiation_rate
+        // ?? radiation_rate vs radiation... and check in jsonValidator
         // ?? radiation_rate_max
         radiation_rate: number|undefined;
         radiation_rate_avg: number|undefined;
@@ -212,8 +214,9 @@ export interface DataJson {
 
 export interface DataOneStation {
     meteor: string;
-    // info: DataInfo;
+    info: DataInfo;
     data: Array<DataJson>;
+    // ?? no more extremes key
 }
 
 export type DataStations = DataOneStation[];
