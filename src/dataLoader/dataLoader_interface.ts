@@ -211,6 +211,47 @@ export interface DataJson {
         end_valeurs: number|undefined;
     };
 }
+export const dataJsonKeys = [
+    "barometer", "barometer_avg", "barometer_max_time", "barometer_max", "barometer_min_time", "barometer_min",
+    "dewpoint", "dewpoint_avg", "dewpoint_max_time", "dewpoint_max", "dewpoint_min_time", "dewpoint_min",
+    "etp",
+    "extra_humid1", "extra_humid1_avg", "extra_humid1_max_time", "extra_humid1_max", "extra_humid1_min_time", "extra_humid1_min",
+    "extra_humid2", "extra_humid2_avg", "extra_humid2_max_time", "extra_humid2_max", "extra_humid2_min_time", "extra_humid2_min",
+    "extra_temp1", "extra_temp1_avg",
+    "extra_temp2", "extra_temp2_avg",
+    "extra_temp3", "extra_temp3_avg",
+    "hail", "hail_sum",
+    "heatindex", "heatindex_avg", "heatindex_max_time", "heatindex_max",
+    "humidity", "humidity_avg", "humidity_max_time", "humidity_max", "humidity_min_time", "humidity_min",
+    "in_humidity", "in_humidity_avg", "in_humidity_max_time", "in_humidity_max", "in_humidity_min_time", "in_humidity_min",
+    "in_temp", "in_temp_avg", "in_temp_max_time", "in_temp_max", "in_temp_min_time", "in_temp_min",
+    "leaf_temp1", "leaf_temp1_avg",
+    "leaf_temp2", "leaf_temp2_avg",
+    "leaf_wet1", "leaf_wet1_avg",
+    "leaf_wet2", "leaf_wet2_avg",
+    "out_temp", "out_temp_avg", "out_temp_max_time", "out_temp_max", "out_temp_min_time", "out_temp_min",
+    "pressure", "pressure_avg", "pressure_max_time", "pressure_max", "pressure_min_time", "pressure_min",
+    "radiation", "radiation_max_time", "radiation_max", "radiation_min_time", "radiation_min",
+    "radiation_rate", "radiation_rate_avg", "radiation_rate_max_time", "radiation_rate_max",
+    "rain",
+    "rain_rate_avg", "rain_rate_max_time", "rain_rate_max",
+    "rain_utc",
+    "rx",
+    "soil_moist1", "soil_moist1_avg",
+    "soil_moist2", "soil_moist2_avg",
+    "soil_moist3", "soil_moist3_avg",
+    "soil_moist4", "soil_moist4_avg",
+    "soil_temp1", "soil_temp1_avg", "soil_temp1_min_time", "soil_temp1_min",
+    "soil_temp2", "soil_temp2_avg", "soil_temp2_min_time", "soil_temp2_min",
+    "soil_temp3", "soil_temp3_avg", "soil_temp3_min_time", "soil_temp3_min",
+    "soil_temp4", "soil_temp4_avg", "soil_temp4_min_time", "soil_temp4_min",
+    "uv_indice", "uv_indice_avg", "uv_indice_max_time", "uv_indice_max",
+    "voltage", "voltage_avg", "voltage_min_time", "voltage_min",
+    "wind", "wind_avg", "wind_dir", "wind_max", "wind_max_dir", "wind_max_time",
+    "wind10", "wind10_avg",
+    "windchill", "windchill_avg", "windchill_min_time", "windchill_min",
+    "end_valeurs",
+];
 
 export interface DataOneStation {
     meteor: string;

@@ -1,4 +1,4 @@
-import { DataStations, DataOneStation, DataJson } from '../../dataLoader/dataLoader_interface'
+import { DataStations, DataOneStation, DataJson, dataJsonKeys } from '../../dataLoader/dataLoader_interface'
 
 interface UpdateItem {
     [key: string]: any;
@@ -88,7 +88,11 @@ function _checkJsonOneMesure(meteor: string, dataJson: DataJson): void {
 
     // loop in all keys
     for (const key in dataMesure) {
-        const j_value = dataMesure[key];
+        if (dataJsonKeys.indexOf(key) === -1) {
+            throw new Error(`key ${key} is unknown`);
+        }
+
+            const j_value = dataMesure[key];
         // check obs data
         if (key.endsWith("_max") || key.endsWith("_min")) {
             // add a time entry if not present
