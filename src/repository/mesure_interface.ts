@@ -1,6 +1,6 @@
-import { Entity_Herited_INT, EntityData } from './entity_interface.js';
+import { Entity_INT, EntityData } from './entity_interface.js';
 import {Aggreg_Type} from '../tools/enums.js';
-export type Entity_Child_INT = Entity_Herited_INT;
+import { dbConn } from '../tools/db_interface.js';
 
 export interface MesureData extends EntityData{
     name: string|undefined;
@@ -18,6 +18,8 @@ export interface MesureData extends EntityData{
     j: string|undefined;
 };
 
-export interface Mesure_INT extends Entity_Child_INT {
 
+export interface Mesure_INT extends Entity_INT {
+    updateMe(pgconn: dbConn|undefined): Promise<number|undefined>;
+    deleteMe(pgconn: dbConn|undefined): Promise<number|undefined>;
 }

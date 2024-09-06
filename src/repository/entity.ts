@@ -1,10 +1,9 @@
 import 'reflect-metadata';
 import { Container } from 'typedi';
-import {DB, DBOptions} from "../tools/db.js";
-import {DBLock} from "../tools/enums.js";
-import pg from 'pg'
-import {Entity_INT, EntityData} from './entity_interface.js'
-import {DB_INT} from "../tools/db_interface.js";
+import { DB_PG } from "../tools/db_pg.js";
+import { DB_INT, dbConn, DBOptions } from "../tools/db_interface.js";
+import { DBLock } from "../tools/enums.js";
+import { Entity_INT, EntityData } from './entity_interface.js'
 
 export class Entity implements Entity_INT{
     private data: EntityData;
@@ -18,7 +17,7 @@ export class Entity implements Entity_INT{
         this.data = myData;
         this.dirtyCols = [];
         this.isDirty = false;
-        this.db = Container.get(DB);
+        this.db = Container.get(DB_PG);
     }
     public getData(): EntityData {
         return this.data;
@@ -115,19 +114,19 @@ export class Entity implements Entity_INT{
         return sql;
     }
 
-    public async getOneDBData(pgconn: pg.Client|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<EntityData> {
+    public async getOneDBData(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<EntityData> {
         dbOptions['limit'] = 1;
         const sql = this.buildSelectRequest(dbOptions);
         const dataFromSQL = await this.db.execute(pgconn, sql, []);
         return dataFromSQL;
     }
-    public async getDBData(pgconn: pg.Client|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<EntityData[]> {
+    public async getDBData(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<EntityData[]> {
         const sql = this.buildSelectRequest(dbOptions);
         const dataFromSQL = await this.db.query(pgconn, sql, []);
         return dataFromSQL;
     }
 
-    public async updateAll(pgconn: pg.Client|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<any[]> {
+    public async updateAll(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<any[]> {
         if (this.isDirty) {
             if (!dbOptions.hasOwnProperty('where') || !dbOptions.where) {
                 throw new Error('updateAll needs a where clause');
@@ -153,13 +152,13 @@ export class Entity implements Entity_INT{
             }
             sql += ' returning ' + dbOptions.returning;
             // execute update statement
-            const instanceDB = Container.get(DB);
+            const instanceDB = Container.get(DB_PG);
             const returnedCols = await instanceDB.query(pgconn, sql, newValues);
             return returnedCols;
         }
         return [];
     }
-    public async deleteAll(pgconn: pg.Client|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<any[]> {
+    public async deleteAll(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<any[]> {
         if (!dbOptions.hasOwnProperty('where') || !dbOptions.where) {
             throw new Error('deleteAll needs a where clause');
         }
@@ -172,11 +171,11 @@ export class Entity implements Entity_INT{
         }
         sql += ' returning ' + dbOptions.returning;
         // execute delete statement
-        const instanceDB = Container.get(DB);
+        const instanceDB = Container.get(DB_PG);
         const deletedKeys = await instanceDB.query(pgconn, sql);
         return deletedKeys
     }
-    public async insertMe(pgconn: pg.Client|undefined): Promise<void> {
+    public async insertMe(pgconn: dbConn|undefined): Promise<void> {
         // multiple rows insert
         // const sql = "insert into nico(num, name) values($1, $2) returning *";
         // const values = [[1, 'nico'], [2, 'nico2'], [3, 'nico3']];
@@ -203,7 +202,7 @@ export class Entity implements Entity_INT{
         sqlEnd = sqlEnd.substring(0, sqlEnd.length - 2) as string;
         sql += ' ) ' + sqlEnd + ' ) returning *';
         // execute insert statement
-        const instanceDB = Container.get(DB);
+        const instanceDB = Container.get(DB_PG);
         const insertedCols = await instanceDB.query(pgconn, sql, newValues);
         this.data = insertedCols[0];
         this.isDirty = false;

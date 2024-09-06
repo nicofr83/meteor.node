@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import {Container} from 'typedi';
-import { DB } from "../tools/db.js";
-import {DBOptions } from "../../src/tools/db";
-import {Poste} from "./poste.js";
-import {PosteData} from '../repository/poste_interface.js';
+import { DB_PG } from "../tools/db_pg.js";
+import { DBOptions } from "../tools/db_interface.js"
+import { Poste } from "./poste.js";
+import { PosteData } from '../repository/poste_interface.js';
 
 const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
 
@@ -13,7 +13,7 @@ describe("Poste test", () => {
         expect(myPoste.getData().id).toEqual(1);
     }, 700 * SECONDS);
     it("getColumnsName getOne with cxion", async () => {
-        const db = Container.get(DB);
+        const db = Container.get(DB_PG);
         const pgConn = await db.beginTransaction();
         const myPoste = await Poste.getOne(pgConn, {'where': 'id = 1'} as DBOptions);
         await db.commitTransaction(pgConn);
@@ -73,7 +73,7 @@ describe("Poste test", () => {
         expect(allPostes[0].id).toEqual(1);
     }, 700 * SECONDS);
     it("updateAll commit", async () => {
-        const db = Container.get(DB);
+        const db = Container.get(DB_PG);
         const pgConn = await db.beginTransaction();
         var myPoste = await Poste.getOne(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
         var altitude = myPoste.getData().altitude;
@@ -92,7 +92,7 @@ describe("Poste test", () => {
         expect(new_altitude).toEqual(150);
     }, 700 * SECONDS);
     it("updateMe rollback", async () => {
-        const db = Container.get(DB);
+        const db = Container.get(DB_PG);
         const pgConn = await db.beginTransaction();
         var myPoste = await Poste.getOne(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
         var altitude = myPoste.getData().altitude;
@@ -106,7 +106,7 @@ describe("Poste test", () => {
     }, 700 * SECONDS);
 
     it("updateAll rollback", async () => {
-        const db = Container.get(DB);
+        const db = Container.get(DB_PG);
         const pgConn = await db.beginTransaction();
         var myPoste = await Poste.getOne(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
         var altitude = myPoste.getData().altitude;
@@ -118,7 +118,7 @@ describe("Poste test", () => {
         expect(myPoste.getData().altitude).toEqual(altitude);
     }, 700 * SECONDS);
     it("deleteAll rollback", async () => {
-        const db = Container.get(DB);
+        const db = Container.get(DB_PG);
         const pgConn = await db.beginTransaction();
         var myPoste = new Poste();
         var deletedKeys = await myPoste.deleteAll(pgConn, {'where': 'id in (1, 2)'} as DBOptions);
@@ -127,7 +127,7 @@ describe("Poste test", () => {
     }, 700 * SECONDS);
 
     it("deleteMe rollback", async () => {
-        const db = Container.get(DB);
+        const db = Container.get(DB_PG);
         const pgConn = await db.beginTransaction();
         var myPoste = await Poste.getOne(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
         var deletedKeys = await myPoste.deleteMe(pgConn);
@@ -135,7 +135,7 @@ describe("Poste test", () => {
         expect((deletedKeys as any).id).toEqual(36);
     }, 700 * SECONDS);
    it("insert rollback", async () => {
-        const db = Container.get(DB);
+        const db = Container.get(DB_PG);
         const pgConn = await db.beginTransaction();
         var myPoste = await Poste.getOne(pgConn, {'where': "meteor = 'BBF015'"} as DBOptions);
         myPoste.setData({'meteor': 'BBF015-2', id: undefined} as PosteData);

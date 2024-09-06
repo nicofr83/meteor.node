@@ -1,5 +1,6 @@
-import { Entity_Herited_INT, EntityData } from './entity_interface.js';
-export type Entity_Child_INT = Entity_Herited_INT;
+import { Entity_INT, EntityData } from './entity_interface.js';
+import { dbConn } from '../tools/db_interface.js';
+
 import {DataSource, LoadType} from '../tools/enums.js';
 
 export interface PosteData extends EntityData{
@@ -20,6 +21,7 @@ export interface PosteData extends EntityData{
     info_sync: number | undefined;
 }
 
-export interface Poste_INT extends Entity_Child_INT {
-
+export interface Poste_INT extends Entity_INT {
+    updateMe(pgconn: dbConn|undefined): Promise<number|undefined>;
+    deleteMe(pgconn: dbConn|undefined): Promise<number|undefined>;
 }

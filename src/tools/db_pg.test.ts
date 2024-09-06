@@ -1,17 +1,17 @@
 import 'reflect-metadata';
-import { Container} from 'typedi';
-import {DB} from "./db.js";
+import { Container } from 'typedi';
+import { DB_PG } from "./db_pg.js";
 
 const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
 
-describe("DB Tests", () => {
+describe("DB_PG Tests", () => {
     it("singleton", () => {
-        const instanceA = Container.get(DB);
-        const instanceB = Container.get(DB);        
+        const instanceA = Container.get(DB_PG);
+        const instanceB = Container.get(DB_PG);        
         expect(instanceB.getInstanceCount()).toEqual(1);
     }, 70 * SECONDS);
     it("connect", async () => {
-        const instance = Container.get(DB);
+        const instance = Container.get(DB_PG);
         try {
             const client = await instance.connect();
             await instance.disconnect(client);
@@ -21,7 +21,7 @@ describe("DB Tests", () => {
         }       
     }, 70 * SECONDS); 
     it("simple select", async () => {
-        const instance = Container.get(DB);
+        const instance = Container.get(DB_PG);
         try {
             const client = await instance.connect();
             await instance.beginTransaction(client);
@@ -35,7 +35,7 @@ describe("DB Tests", () => {
         }       
     }, 70 * SECONDS);
     it("select one poste", async () => {
-        const instance = Container.get(DB);
+        const instance = Container.get(DB_PG);
         try {
             const client = await instance.connect();
             await instance.beginTransaction(client);

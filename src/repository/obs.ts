@@ -1,13 +1,13 @@
 import 'reflect-metadata';
 import { Service, Container } from 'typedi';
-import { DB, DBOptions } from "../tools/db.js";
-import pg from 'pg'
+import { DB_PG } from "../tools/db_pg.js";
+import { DBOptions, dbConn } from "../tools/db_interface.js";
 import { Entity } from "./entity.js";
-import { Entity_Child_INT, ObsData } from './obs_interface.js';
+import { Obs_INT, ObsData } from './obs_interface.js';
 // import {Code_QA} from '../tools/enums';
 
 @Service({ transient: true })
-export class Obs extends Entity implements Entity_Child_INT {
+export class Obs extends Entity implements Obs_INT {
 
     constructor(myData: ObsData = {} as ObsData) {
         if (JSON.stringify(myData) != '{}') {
@@ -80,14 +80,14 @@ export class Obs extends Entity implements Entity_Child_INT {
             this.setTableName('obs');
         }
     }
-    public static async getOne(pgconn: pg.Client | undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Obs> {
+    public static async getOne(pgconn: dbConn | undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Obs> {
         var my_Obs = new Obs()
         const ObsData = (await my_Obs.getOneDBData(pgconn, dbOptions)) as ObsData;
         my_Obs = new Obs(ObsData);
         return my_Obs;
     }
 
-    public static async getAll(pgconn: pg.Client | undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Obs[]> {
+    public static async getAll(pgconn: dbConn | undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Obs[]> {
         const all_Obss: Obs[] = [];
         var my_Obs = new Obs()
         const allData = await my_Obs.getDBData(pgconn, dbOptions);
@@ -98,17 +98,17 @@ export class Obs extends Entity implements Entity_Child_INT {
         return all_Obss;
     }
 
-    public static async liste(pgconn: pg.Client | undefined, dbOptions: DBOptions = {} as DBOptions): Promise<ObsData[]> {
+    public static async liste(pgconn: dbConn | undefined, dbOptions: DBOptions = {} as DBOptions): Promise<ObsData[]> {
         const all_Obss: Obs[] = [];
         const my_Obs = new Obs();
         var sqlRequest = my_Obs.buildSelectRequest(dbOptions);
 
-        const instance = Container.get(DB);
+        const instance = Container.get(DB_PG);
         const allData = await instance.query(pgconn, sqlRequest);
         return allData;
     }
 
-    public async updateMe(pgconn: pg.Client | undefined): Promise<number | undefined> {
+    public async updateMe(pgconn: dbConn | undefined): Promise<number | undefined> {
         if (this.getData().id == undefined) {
             throw new Error('Obs not loaded, then cannot updateMe');
         }
@@ -119,7 +119,7 @@ export class Obs extends Entity implements Entity_Child_INT {
         return updatedIds[0];
     }
 
-    public async deleteMe(pgconn: pg.Client | undefined): Promise<number | undefined> {
+    public async deleteMe(pgconn: dbConn | undefined): Promise<number | undefined> {
         if (this.getData().id == undefined) {
             throw new Error('Obs not loaded, then cannot deleteMe');
         }

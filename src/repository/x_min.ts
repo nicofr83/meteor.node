@@ -1,12 +1,12 @@
 import 'reflect-metadata';
 import { Service, Container} from 'typedi';
-import {DB, DBOptions} from "../tools/db.js";
-import pg from 'pg'
+import { DB_PG } from "../tools/db_pg.js";
+import { DBOptions, dbConn } from "../tools/db_interface.js";
 import {Entity} from "./entity.js";
-import {Entity_Child_INT, X_MinData} from './x_min_interface.js';
+import {X_Min_INT, X_MinData} from './x_min_interface.js';
 
 @Service({ transient: true })
-export class X_Min extends Entity implements Entity_Child_INT{
+export class X_Min extends Entity implements X_Min_INT{
 
     constructor(myData:X_MinData = {} as X_MinData ) {
         if (JSON.stringify(myData) != '{}') {
@@ -26,14 +26,14 @@ export class X_Min extends Entity implements Entity_Child_INT{
             }
             this.setTableName('x_min');
         }
-        public static async getOne(pgconn: pg.Client|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<X_Min> {
+        public static async getOne(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<X_Min> {
             var my_X_Min = new X_Min()
             const X_MinData = (await my_X_Min.getOneDBData(pgconn, dbOptions)) as X_MinData;
             my_X_Min = new X_Min(X_MinData);
             return my_X_Min;
         }
 
-        public static async getAll(pgconn: pg.Client|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<X_Min[]> {
+        public static async getAll(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<X_Min[]> {
             const all_X_Mins: X_Min[] = [];
             var my_X_Min = new X_Min()
             const allData = await my_X_Min.getDBData(pgconn, dbOptions);
@@ -44,17 +44,17 @@ export class X_Min extends Entity implements Entity_Child_INT{
             return all_X_Mins;
         }
 
-        public static async liste(pgconn: pg.Client|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<X_MinData[]> {
+        public static async liste(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<X_MinData[]> {
             const all_X_Mins: X_Min[] = [];
             const my_X_Min = new X_Min();
             var sqlRequest = my_X_Min.buildSelectRequest(dbOptions);
 
-            const instance = Container.get(DB);
+            const instance = Container.get(DB_PG);
             const allData = await instance.query(pgconn, sqlRequest);
             return allData;
         }
 
-        public async updateMe(pgconn: pg.Client|undefined): Promise<number|undefined>{
+        public async updateMe(pgconn: dbConn|undefined): Promise<number|undefined>{
             if (this.getData().id == undefined) {
                 throw new Error('X_Min not loaded, then cannot updateMe');
             }
@@ -65,7 +65,7 @@ export class X_Min extends Entity implements Entity_Child_INT{
             return updatedIds[0];
         }
 
-        public async deleteMe(pgconn: pg.Client|undefined): Promise<number|undefined>{
+        public async deleteMe(pgconn: dbConn|undefined): Promise<number|undefined>{
             if (this.getData().id == undefined) {
                 throw new Error('X_Min not loaded, then cannot deleteMe');
             }

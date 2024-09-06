@@ -1,5 +1,5 @@
 import {Entity} from "./entity.js";
-import { DBOptions } from "../../src/tools/db"
+import { DBOptions } from "../tools/db_interface.js"
 import {DBLock} from "../tools/enums.js";
 
 const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;

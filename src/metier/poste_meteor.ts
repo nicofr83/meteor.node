@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { Service } from 'typedi';
 import { Poste } from '../repository/poste.js';
 import { PosteMeteor_INT, PosteData } from './poste_meteor_interface.js'
-import { DBOptions } from '../tools/db.js';
+import { DBOptions } from '../tools/db_interface.js';
 import { LoadType } from '../tools/enums.js';
 
 @Service({ transient: true })

@@ -1,7 +1,8 @@
 
 
-import { Entity_Herited_INT, EntityData } from './entity_interface.js';
-export type Entity_Child_INT = Entity_Herited_INT;
+import { Entity_INT, EntityData } from './entity_interface.js';
+import { dbConn } from '../tools/db_interface.js';
+
 import {Code_QA} from '../tools/enums.js';
 
 export interface ObsData extends EntityData{
@@ -68,6 +69,7 @@ export interface ObsData extends EntityData{
     qa_modifications: number|undefined;
 }
 
-export interface Obs_INT extends Entity_Child_INT {
-
+export interface Obs_INT extends Entity_INT {
+    updateMe(pgconn: dbConn|undefined): Promise<number|undefined>;
+    deleteMe(pgconn: dbConn|undefined): Promise<number|undefined>;
 }

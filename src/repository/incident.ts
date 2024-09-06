@@ -1,12 +1,12 @@
 import 'reflect-metadata';
 import { Service, Container} from 'typedi';
-import {DB, DBOptions} from "../tools/db.js";
-import pg from 'pg'
+import {DB_PG } from "../tools/db_pg.js";
+import { DBOptions, dbConn } from "../tools/db_interface.js";
 import {Entity} from "./entity.js";
-import {Entity_Child_INT, IncidentData} from './incident_interface.js';
+import {Incident_INT, IncidentData} from './incident_interface.js';
 
 @Service({ transient: true })
-export class Incident extends Entity implements Entity_Child_INT{
+export class Incident extends Entity implements Incident_INT{
 
     constructor(myData:IncidentData = {} as IncidentData ) {
         if (JSON.stringify(myData) != '{}') {
@@ -25,14 +25,14 @@ export class Incident extends Entity implements Entity_Child_INT{
             }
             this.setTableName('incidents');
         }
-        public static async getOne(pgconn: pg.Client|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Incident> {
+        public static async getOne(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Incident> {
             var my_Incident = new Incident()
             const IncidentData = (await my_Incident.getOneDBData(pgconn, dbOptions)) as IncidentData;
             my_Incident = new Incident(IncidentData);
             return my_Incident;
         }
 
-        public static async getAll(pgconn: pg.Client|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Incident[]> {
+        public static async getAll(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Incident[]> {
             const all_Incidents: Incident[] = [];
             var my_Incident = new Incident()
             const allData = await my_Incident.getDBData(pgconn, dbOptions);
@@ -43,17 +43,17 @@ export class Incident extends Entity implements Entity_Child_INT{
             return all_Incidents;
         }
 
-        public static async liste(pgconn: pg.Client|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<IncidentData[]> {
+        public static async liste(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<IncidentData[]> {
             const all_Incidents: Incident[] = [];
             const my_Incident = new Incident();
             var sqlRequest = my_Incident.buildSelectRequest(dbOptions);
 
-            const instance = Container.get(DB);
+            const instance = Container.get(DB_PG);
             const allData = await instance.query(pgconn, sqlRequest);
             return allData;
         }
 
-        public async updateMe(pgconn: pg.Client|undefined): Promise<number|undefined>{
+        public async updateMe(pgconn: dbConn|undefined): Promise<number|undefined>{
             if (this.getData().id == undefined) {
                 throw new Error('Incident not loaded, then cannot updateMe');
             }
@@ -64,7 +64,7 @@ export class Incident extends Entity implements Entity_Child_INT{
             return updatedIds[0];
         }
 
-        public async deleteMe(pgconn: pg.Client|undefined): Promise<number|undefined>{
+        public async deleteMe(pgconn: dbConn|undefined): Promise<number|undefined>{
             if (this.getData().id == undefined) {
                 throw new Error('Incident not loaded, then cannot deleteMe');
             }
