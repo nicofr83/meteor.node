@@ -1,23 +1,21 @@
 import { RunOnceSvc } from '../runOnceSvc.js';
 
-class TestRunOnceSvc extends RunOnceSvc {
+class Migrate extends RunOnceSvc {
+
     constructor() {
         super();
-        const filePath = __filename.toString().split('/');
-        this.name =filePath[filePath.length - 1];
     }
+
     public async runMe(data: any): Promise<object|undefined> {
         // this.log(LogType.INFO, `in SvcTest : ${JSON.stringify(data)}`);
         return new Promise<object|undefined>((f, reject) => {
-            setTimeout(() => {
-                try {
+            try {
+                console.log('first call of setTimer');
  
-                    f({'returnedData': {'count': 1}});
-                } catch (error) {
-                    reject(error);
-                }
-            },200);
+            } catch(error: any) {
+                reject(error);
+            }
         });
     }
 }
-new TestRunOnceSvc();
+new Migrate();

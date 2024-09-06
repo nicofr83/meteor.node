@@ -4,7 +4,7 @@ import * as path from "path";
 import watch from "node-watch";
 import { JsonLoader } from "./jsonLoader.js";
 
-class TestRunOnceSvc extends RunOnceSvc {
+class LoadJson extends RunOnceSvc {
     private timeOutTimer: NodeJS.Timeout|undefined;
     private bRenameTmpFile = false;
     private autoLoadDir: string;
@@ -136,4 +136,4 @@ class TestRunOnceSvc extends RunOnceSvc {
         }
     }
 }
-new TestRunOnceSvc();
+new LoadJson();
