@@ -8,7 +8,7 @@ export interface MesureData extends EntityData{
     json_input_bis: string|undefined;
     archive_col: string|undefined;
     archive_table: string|undefined;
-    field_dir: number|undefined;
+    field_dir: bigint|undefined;
     max: boolean|undefined;
     min: boolean|undefined;
     agreg_type: Aggreg_Type|undefined;
