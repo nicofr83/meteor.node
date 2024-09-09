@@ -1,12 +1,15 @@
 import 'reflect-metadata';
-import { Service } from 'typedi';
+import { Service, Container } from 'typedi';
 import { DB_INT, dbConn } from './db_interface.js'
+import {Log} from "./log.js";
 
 @Service()
 export abstract class DB implements DB_INT {
     private instance_count = 0
+    public myLog: Log;
 
     constructor() {
+        this.myLog = Container.get(Log);
         this.instance_count++;
     }
 

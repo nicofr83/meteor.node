@@ -1,5 +1,6 @@
-import { Pool as PgPool } from 'pg'
-import { Pool as MysqlPool } from 'mysql2';
+import { PoolClient } from 'pg'
+import mysql from 'mysql2/promise';
+import pg from 'pg';
 import { DBLock } from './enums.js';
 
 export interface DBOptions {
@@ -11,7 +12,7 @@ export interface DBOptions {
     returning: string|undefined;
 }
 
-// export type dbConn = PgPool | MysqlPool;
+// export type dbConn = PoolClient | mysql.PoolConnection;
 export type dbConn = any;
 
 export interface DB_INT {

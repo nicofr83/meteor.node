@@ -20,6 +20,9 @@ export class DB_PG extends DB{
     }
 
     async connect(dbName: string|undefined = undefined): Promise<pg.PoolClient> {
+        if (dbName != undefined && dbName != this.pool.options.database) {
+            throw new Error('Database name mismatch');
+        }
         // console.log('I am connecting!');
         const client = await this.pool.connect();
         return client;
