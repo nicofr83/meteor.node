@@ -1,18 +1,20 @@
 import 'reflect-metadata';
 import { Container } from 'typedi';
-import { ObsMeteor } from "./obs_meteor.js";
+import { DumpMeteor } from "./dump_meteor.js";
 import { DBOptions } from '../tools/db_interface.js';
-import exp from 'constants';
 
-const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
+// const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
+const SECONDS = 1000;
 
-describe("Obs test", () => {
+describe("Dump test", () => {
     // it("getColumnsName getOne no cxion", async () => {
     //     const myMesure = await MesureMeteor.getOne(undefined, {'where': 'id = 1'} as DBOptions);
     //     expect(myMesure.getData().id).toEqual(1);
     // }, 700 * SECONDS);
     it("archiveDateLimits", async () => {
-        const dateLimits = await ObsMeteor.archiveDateLimits();
+        const myDump = Container.get(DumpMeteor);
+        myDump.setDbName('BBF015');
+        const dateLimits = await myDump.archiveDateLimits();
         //   min        | min_dt              | max        | max_dt              |
         // +------------+---------------------+------------+---------------------+
         // | 1435176420 | 2015-06-24 22:07:00 | 1647115200 | 2022-03-12 21:00:00 |

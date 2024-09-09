@@ -8,6 +8,7 @@ export interface EntityData{
 export interface Entity_INT {
     getData(): EntityData;
     setData(newData: EntityData): void;
+    setOnlyData(newData: EntityData): void;
     getIsDirty(): boolean;
     setDirtyCols(newDirtyFlag: boolean): void;
     getTableName(): string;

@@ -38,6 +38,9 @@ export class Entity implements Entity_INT{
         }
         this.isDirty = true;
     }
+    public setOnlyData(newData: EntityData): void {
+        this.data = newData;
+    }
     public getIsDirty(): boolean {
         return this.isDirty;
     }

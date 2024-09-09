@@ -15,10 +15,11 @@ export class DB_MYSQL extends DB{
     async connect(dbName: string|undefined = undefined): Promise<mysql.PoolConnection> {
         var tmpPool: mysql.Pool|undefined = undefined;
         try {
-            if (process.env.MYSQL_DB?.indexOf('?') != -1) {
+            var varIdx = -1;
+            if (process.env.MYSQL_DB != undefined && process.env.MYSQL_DB?.indexOf('?') != -1) {
                 dbName = process.env.MYSQL_DB;
             }
-            const varIdx = (dbName == undefined) ? -1 : this.pool.findIndex((P => P.dbName == dbName));
+            varIdx = (dbName == undefined) ? -1 : this.pool.findIndex((P) => { return (P == undefined) ? false : P.dbName == dbName;});
             if (varIdx != -1) {
                 return await this.pool[varIdx].pool.getConnection();
             }
@@ -41,7 +42,9 @@ export class DB_MYSQL extends DB{
         } catch (err: any) {
             this.myLog.exception('db_mysql', err);
         }
-        return await (tmpPool as mysql.Pool).getConnection();
+        const myConn = await (tmpPool as mysql.Pool).getConnection();
+        myConn.execute('SET time_zone = "+00:00"');
+        return myConn;
     }
 
     async executeSQL(myConn: mysql.PoolConnection, sql: string, values: any): Promise<any[]>{
