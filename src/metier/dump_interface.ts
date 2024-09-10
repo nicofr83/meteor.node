@@ -1,11 +1,13 @@
-
-export interface Dump_INT {
-
-}
+import { PosteMeteor } from './poste_meteor';
 
 export interface dateLimits {
-    min: number | undefined;
-    min_dt: Date | undefined;
-    max: number | undefined;
-    max_dt: Date | undefined;
+    min: number;
+    min_dt: Date;
+    max: number;
+    max_dt: Date;
+}
+
+export interface Dump_INT {
+    archiveDateLimits(): Promise<dateLimits>;
+    getFromDump(curPoste: PosteMeteor, limits: dateLimits): Promise<{archive: any[], records:any[]}>;
 }

@@ -4,6 +4,7 @@ import { MesureMeteor } from "./mesure_meteor.js";
 import { DBOptions } from '../tools/db_interface.js';
 
 const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
+const myMesureMeteor = Container.get(MesureMeteor);
 
 describe("MesureMeteor test", () => {
     it("getColumnsName getOne no cxion", async () => {
@@ -11,7 +12,7 @@ describe("MesureMeteor test", () => {
         expect(myMesure.getData().id).toEqual(1);
     }, 700 * SECONDS);
     it("getListes", async () => {
-        const allMesures = await MesureMeteor.getListe();
+        const allMesures = await myMesureMeteor.getListe();
         expect(allMesures[0].id).toEqual(1);
     }, 700 * SECONDS);
 });

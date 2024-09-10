@@ -9,8 +9,8 @@ import {Mesure_INT, MesureData} from './mesure_interface.js';
 @Service({ transient: true })
 export class Mesure extends Entity implements Mesure_INT{
 
-    constructor(myData:MesureData = {} as MesureData ) {
-        if (JSON.stringify(myData) != '{}') {
+    constructor(myData:MesureData|undefined = undefined ) {
+        if (myData != undefined) {
             super(myData);
         } else {
             super(

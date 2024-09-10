@@ -4,10 +4,10 @@
   "description": "Meteor db server",
   "main": "dist/index.js",
   "scripts": {
-    "test": "npx jest",
-    "test2": "npx jest --coverage; open coverage/lcov-report/index.html",
+    "test": "env TZ='UTC' npx jest",
+    "test2": "env TZ='UTC' npx jest --coverage; open coverage/lcov-report/index.html",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "env TZ='UTC' node dist/index.js"
   },
   "author": "Nicolas Cuvillier (2024)",
   "license": "ISC",

@@ -35,15 +35,14 @@ export class DB_MYSQL extends DB{
                 idleTimeout: 100000, // idle connections timeout, in milliseconds, the default value 60000
                 queueLimit: 0,
                 enableKeepAlive: true,
-                keepAliveInitialDelay: 0,
-                timezone: 'utc'
+                keepAliveInitialDelay: 0
             });
             this.pool.push({dbName: dbName as string, pool: tmpPool});
         } catch (err: any) {
             this.myLog.exception('db_mysql', err);
         }
         const myConn = await (tmpPool as mysql.Pool).getConnection();
-        myConn.execute('SET time_zone = "+00:00"');
+        await myConn.execute('SET time_zone = "+00:00"');
         return myConn;
     }
 

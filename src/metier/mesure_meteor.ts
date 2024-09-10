@@ -7,10 +7,10 @@ import {DBOptions} from '../tools/db_interface.js';
 
 @Service({ transient: true })
 export class MesureMeteor extends Mesure implements MesureMeteor_INT {
-    constructor(data: MesureData) {
+    constructor(data: MesureData|undefined = undefined) {
         super(data);
     }
-    public static async getListe(): Promise<MesureItem[]> {
+    public async getListe(): Promise<MesureItem[]> {
         var fixedMesures = [] as MesureItem[];
         const mesures = (await Mesure.liste(undefined, {'order': 'id'} as DBOptions)) as MesureData[];
         for (const aMesure of mesures) {
