@@ -21,13 +21,13 @@ describe("DB_PG Tests", () => {
         }       
     }, 70 * SECONDS); 
     it("simple select", async () => {
-        const instance = Container.get(DB_PG);
+        const dbPG = Container.get(DB_PG);
         try {
-            const client = await instance.connect();
-            await instance.beginTransaction(client);
-            const res = await instance.execute(client, 'SELECT version()');
-            await instance.rollbackTransaction(client);
-            await instance.disconnect(client);
+            const client = await dbPG.connect();
+            await dbPG.beginTransaction(client);
+            const res = await dbPG.execute(client, 'SELECT version()');
+            await dbPG.rollbackTransaction(client);
+            await dbPG.disconnect(client);
             expect((res.version as string).startsWith("PostgreSQL ")).toEqual(true);
         } catch (err) {
             console.error(err);

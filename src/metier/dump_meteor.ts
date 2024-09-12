@@ -10,27 +10,28 @@ import { PosteMeteor } from './poste_meteor.js';
 
 @Service({ transient: true })
 export class DumpMeteor implements Dump_INT {
-    private dbName: string | undefined;
-    private db_mysql = Container.get(DB_MYSQL);
+    private meteor: string| undefined;
+    private curPoste: PosteMeteor | undefined;
+    private dbMysql = Container.get(DB_MYSQL);
     private myLog = Container.get(Log);
     private myMesure = Container.get(MesureMeteor);
-    private sql_archive: string;
-    private sql_minmax: string [];
 
     constructor() {
-        this.dbName = undefined;
-        this.sql_archive = '';
-        this.sql_minmax = [];
+        this.curPoste = undefined;
     }
-    public setDbName(dbName: string): void {
-        this.dbName = dbName;
+
+    public async setStationName(meteor: string): Promise<PosteMeteor> {
+        this.meteor = meteor;
+        this.curPoste = await PosteMeteor.getOne(undefined, {'where': `meteor = \'${meteor}\'`} as DBOptions);
+        return this.curPoste;
     }
+
     public async archiveDateLimits(): Promise<dateLimits>{
-        if (this.dbName === undefined) {
-            throw new Error('dbName is undefined');
+        if (this.curPoste === undefined) {
+            throw new Error('Station name is undefined');
         }
-        const myConn = await this.db_mysql.connect(this.dbName);
-        const ret = await this.db_mysql.executeSQL(
+        const myConn = await this.dbMysql.connect(this.meteor);
+        const ret = await this.dbMysql.executeSQL(
             myConn,
             'select min(datetime) as min, min(from_unixtime(datetime)) as min_dt, max(datetime) as max, max(from_unixtime(datetime)) as max_dt from archive',
             []
@@ -53,53 +54,87 @@ export class DumpMeteor implements Dump_INT {
         // dateLimits = this.getNextSlot(dateLimits, true);
 
 
-        this.sql_archive = this.loadArchiveSQL(mAll, limits);
-        this.sql_minmax = this.loadRecordSQL(mAll, limits);
-
-        ret.archive = await this.loadArchiveData();
-        ret.records = await this.loadRecordsData();
+        ret.archive = await this.loadArchiveData(mAll, limits);
+        ret.records = await this.loadRecordsData(mAll, limits);
 
         return ret;
     }
+
     public getNextSlot(prevLimits: dateLimits, IsItFirstCall: boolean = false): dateLimits {
-        if (!IsItFirstCall) {
-            // min = max; min_dt = max_dt
+        if (!prevLimits.first_pass) {
+            prevLimits.first_pass = true;
+            prevLimits.min = prevLimits.max;
+            prevLimits.min_dt = prevLimits.max_dt;
+            if (this.curPoste?.getData().last_obs_date_local != undefined) {
+                if (this.curPoste.getData().last_obs_date_local > prevLimits.min_dt) {
+                    prevLimits.min_dt = this.curPoste.getData().last_obs_date_local;
+                    prevLimits.min = Math.floor(prevLimits.min_dt.getTime() / 1000);
+                }
+            }
         }
-        // just set max/max_dt depending on min/min_dt
-
-
+        if (prevLimits.min_dt.getDay() < 15) {
+            prevLimits.min_dt.setDate(1);
+            if (prevLimits.min_dt.getMonth() > 12) {
+                prevLimits.min_dt.setMonth(1);
+                prevLimits.min_dt.setFullYear(prevLimits.min_dt.getFullYear() + 1);
+            } else {
+                prevLimits.min_dt.setMonth(prevLimits.min_dt.getMonth() + 1);
+            }
+        } else {
+            prevLimits.min_dt.setDate(15);
+        }
+        if (prevLimits.max_dt.toJSON().indexOf('T00:00:00.000Z') != -1){
+            prevLimits.max_dt = new Date(prevLimits.max_dt.getFullYear(), prevLimits.max_dt.getMonth(), prevLimits.max_dt.getDay(), 0,0,0);   
+            
+            var dt = new Date();
+            new Date(dt.getFullYear(), dt.getMonth(), dt.getDay(), 0,0,0);
+            // dt.get
+        } 
+        prevLimits.max = prevLimits.max_dt.getTime() / 1000;
 
         this.myLog.debug('getNextSlot', `from: ${prevLimits.min_dt} to: ${prevLimits.max_dt}`);
-        const nextLimits = {
-            min: 0,
-            min_dt: new Date(1990, 1, 1),
-            max: Number.MAX_SAFE_INTEGER,
-            max_dt: new Date(2050, 12, 31)
-        } as dateLimits;
-
-        return nextLimits;
+        return prevLimits;
     }
-    private async loadArchiveData(): Promise<any[]> {
-        const archData = [] as any[];
+
+    private async loadArchiveData(mAll: MesureItem[], limits: dateLimits): Promise<any[]> {
+        const sql_archive = this.loadArchiveSQL(mAll, limits);
+
+        const myConn = await this.dbMysql.connect(this.meteor);
+        const archData = await this.dbMysql.executeSQL(myConn, sql_archive, []);
 
         return archData;
     }
-    private async loadRecordsData(): Promise<any[]> {
+
+    private async loadRecordsData(mAll: MesureItem[], limits: dateLimits): Promise<any[]> {
         const recData = [] as any[];
+        const sql_minmax = this.loadRecordSQL(mAll, limits);
+
 
         return recData;
     }
 
     public loadArchiveSQL(mAll: MesureItem[], limits: dateLimits): string {
-        var sql = 'select datetime, from_unixtime(datetime) as date_utc, usUnits, `interval`, ';
-        for (const m of mAll as MesureItem[]) {
-            sql += `${m.archive_col}, `;
+    // date_local
+    // date_utc
+    // poste
+    // duration
+    
+        var sql = 'select' +
+            ' from_unixtime(datetime + 3600 * ' + (this.curPoste as PosteMeteor).getData().delta_timezone + ') as date_local,' +
+            ' from_unixtime(datetime) as date_utc,'+
+            ' ' + this.curPoste?.getData().id + ' as poste_id,' +
+            ' `interval` as duration, ';
+        for (const mItem of mAll) {
+            if (mItem.archive_col != undefined) {
+                sql += `${mItem.archive_col} as ${mItem.json_input}, `;
+            }
         }
         sql = sql.slice(0, -2) + ` from archive `;
         sql += `where datetime >= ${limits.min} and datetime < ${limits.max} order by datetime`;
 
         return sql;
     }
+
     public loadRecordSQL(mAll: MesureItem[], limits: dateLimits): string[] {
         const sql_records = [] as string[];
 

@@ -77,8 +77,8 @@ export class Obs extends Entity implements Obs_INT {
                 qa_details: undefined,
                 qa_modifications: undefined,
             })
-            this.setTableName('obs');
         }
+        this.setTableName('obs');
     }
     public static async getOne(pgconn: dbConn | undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Obs> {
         var my_Obs = new Obs()

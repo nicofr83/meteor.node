@@ -1,6 +1,7 @@
 import { PosteMeteor } from './poste_meteor';
 
 export interface dateLimits {
+    first_pass: boolean|undefined;
     min: number;
     min_dt: Date;
     max: number;

@@ -8,7 +8,7 @@ import {Code_QA} from '../tools/enums.js';
 export interface ObsData extends EntityData{
     date_local: Date|undefined;
     date_utc: Date|undefined;
-    Obs: number|undefined;
+    poste_id: number|undefined;
     duration: number|undefined;
     barometer: number|undefined;
     pressure: number|undefined;
