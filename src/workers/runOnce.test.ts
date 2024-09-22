@@ -7,8 +7,8 @@ const SECONDS = 5000;
 var mtLoop: RunOnce;
 var mtOnce: RunOnce;
 try{
-    mtLoop = new RunOnce('./dist/workers/runOnceSvcTest.js', 'runOnceSvcTest', true, -1);
-    mtOnce = new RunOnce('./dist/workers/runOnceSvcTest.js', 'runOnceSvcTest', false, -1);
+    mtLoop = new RunOnce('./dist/workers/runOnceSvcTest1.js', 'runOnceSvcTest1_loop', true, -1);
+    mtOnce = new RunOnce('./dist/workers/runOnceSvcTest2.js', 'runOnceSvcTest2_once', false, -1);
 } catch (error) {
     // console.error(`MT_RUNONCE: ${error}`);
     process.exit(1);
@@ -28,13 +28,16 @@ describe("RunOnce Tests", () => {
     }, 70 * SECONDS);
     it("1 job with callback", async () => {
         return new Promise<void>((f, reject) => {
+            const d1 = new Date().getTime();
             var ret = undefined as any;
             function cb1(status: boolean, dataCB: any) {
+                // console.log('cb1: ' + (new Date().getTime() - d1) + 'ms');
                 ret = true;
             }
             mtLoop.addJob({'slotId': 1, 'data': 'test 1'}, cb1);
             setTimeout(() => {
                 try {
+                    // console.log('exit1: ' + (new Date().getTime() - d1) + 'ms');
                     expect(ret).toBe(true);
                     f();
                 } catch (error) {

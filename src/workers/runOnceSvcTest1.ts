@@ -5,7 +5,8 @@ class TestRunOnceSvc extends RunOnceSvc {
     private count: number = 0;
     constructor() {
         super();
-        this.name = __filename;
+        const fnArrray =  __filename.split('/');
+        this.name = fnArrray[fnArrray.length - 1].split('.')[0];
         this.count = 0;
         // console.log('TestRunOnceSvc constructor');
     }
@@ -20,7 +21,7 @@ class TestRunOnceSvc extends RunOnceSvc {
                 } catch (error) {
                     reject(error);
                 }
-            },50);
+            },10);
         });
     }
 }
