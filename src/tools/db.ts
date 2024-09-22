@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { Service, Container } from 'typedi';
-import { DB_INT, dbConn } from './db_interface.js'
+import { DB_INT, dbConn } from './db_interface'
 import {Log} from "./log.js";
 
 @Service()

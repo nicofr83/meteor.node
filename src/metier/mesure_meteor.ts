@@ -29,7 +29,7 @@ export class MesureMeteor extends Mesure implements MesureMeteor_INT {
                 json_input: aMesure.json_input,
                 json_input_bis: aMesure.json_input_bis,
                 archive_col: aMesure.archive_col,
-                archive_table: aMesure.archive_table,
+                archive_table: (aMesure.archive_table == null && aMesure.archive_table != 'skip') ? aMesure.name: undefined,
                 field_dir: aMesure.field_dir,
                 max: aMesure.max,
                 min: aMesure.min,

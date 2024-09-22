@@ -8,6 +8,7 @@ import { DB_MYSQL } from '../tools/db_mysql.js';
 import { MesureMeteor } from './mesure_meteor.js';
 import { MesureItem } from './mesure_meteor_interface.js';
 import { PosteMeteor } from './poste_meteor.js';
+import { AnyARecord } from 'node:dns';
 
 @Service({ transient: true })
 export class DumpMeteor implements Dump_INT {
@@ -21,6 +22,7 @@ export class DumpMeteor implements Dump_INT {
 
     constructor() {
         this.curPoste = undefined;
+        this.meteor = undefined;
 
         if (meteorDate != true) {
             throw new Error('meteorDate is not true');
@@ -47,30 +49,40 @@ export class DumpMeteor implements Dump_INT {
         if (this.curPoste === undefined) {
             throw new Error('Station name is undefined');
         }
-        const myConn = await this.dbMysql.connect(this.meteor);
-        const ret = await this.dbMysql.executeSQL(
-            myConn,
-            'select ' +
-            'true as first_pass, ' +
-            'false as stop, ' +
+        var myConn: any = undefined;
+        var ret = [] as dateLimits[];
 
-            'min(datetime) as min, ' +
-            'min(datetime) as arch_min, ' +
-            'min(from_unixtime(datetime)) as min_dt, ' +
-            'min(from_unixtime(datetime)) as arch_min_dt, ' +
+        try {
+            myConn = await this.dbMysql.connect(this.meteor);
+            ret = await this.dbMysql.executeSQL(
+                myConn,
+                'select ' +
+                'true as first_pass, ' +
+                'false as stop, ' +
 
-            'max(datetime) as max, ' +
-            'max(datetime) as arch_max, ' +
-            'max(from_unixtime(datetime)) as max_dt, ' +
-            'max(from_unixtime(datetime)) as arch_max_dt ' +
-            'from archive',
-            []
-        );
+                'min(datetime) as min, ' +
+                'min(datetime) as arch_min, ' +
+                'min(from_unixtime(datetime)) as min_dt, ' +
+                'min(from_unixtime(datetime)) as arch_min_dt, ' +
+
+                'max(datetime) as max, ' +
+                'max(datetime) as arch_max, ' +
+                'max(from_unixtime(datetime)) as max_dt, ' +
+                'max(from_unixtime(datetime)) as arch_max_dt ' +
+                'from archive',
+                []
+            ) as dateLimits[];
+        } finally {
+            if (myConn != undefined) {
+                this.dbMysql.disconnect(myConn);
+                myConn = undefined;
+            }
+        }
         this.myLog.debug('archiveDateLimits', `global limits: from: ${ret[0].min_dt} to: ${ret[0].max_dt}`);
         return ret[0] as dateLimits;
     }
 
-    public async getFromDump(curPoste: PosteMeteor, limits: dateLimits): Promise<{archive: any[], records:any[]}> {
+    public async getFromDump(limits: dateLimits): Promise<{archive: any[], records:any[]}> {
         var ret = {archive: [] as any[], records: [] as any[]};
 
         const mAll = await this.myMesure.getListe();
@@ -127,10 +139,38 @@ export class DumpMeteor implements Dump_INT {
 
     private async loadRecordsData(mAll: MesureItem[], limits: dateLimits): Promise<any[]> {
         const recData = [] as any[];
-        const sql_minmax = this.loadRecordSQL(mAll, limits);
-
-
-        return recData;
+        var myConn: any = undefined;
+        try {
+            myConn = await this.dbMysql.connect(this.meteor);
+            for (const aMesure of mAll as MesureItem[]) {
+                if (aMesure.archive_table == undefined || (aMesure.min == false && aMesure.max == false)) {
+                    continue;
+                }
+                const sql_minmax = this.loadRecordSQL(aMesure, limits);
+                const recMinMax = await this.dbMysql.executeSQL(myConn, sql_minmax, []);
+                for (const rec of recMinMax) {
+                    recData.push({
+                        'mid': aMesure.id,
+                        'dateTime': rec.dateTime,
+                        'min': aMesure.min ? rec.min: undefined,
+                        'mintime': aMesure.min ? rec.mintime: undefined,
+                        'max': aMesure.max ? rec.max: undefined,
+                        'maxtime': aMesure.max ? rec.maxtime: undefined,
+                        'max_dir': rec.max_dir
+                    })
+                }
+            }
+        }
+        catch (error) {
+            throw new Error('loadRecordsData: ' + error);
+        }
+        finally {
+            if (myConn != undefined) {
+                this.dbMysql.disconnect(myConn);
+                myConn = undefined;
+            }
+            return recData;
+        }
     }
 
     public loadArchiveSQL(mAll: MesureItem[], limits: dateLimits): string {
@@ -155,27 +195,16 @@ export class DumpMeteor implements Dump_INT {
         return sql;
     }
 
-    public loadRecordSQL(mAll: MesureItem[], limits: dateLimits): string[] {
-        const sql_records = [] as string[];
-
-        for (const m of mAll as MesureItem[]) {
-            if (m.archive_table == undefined) {
-                continue;
-            }
-            if (m.is_wind == false) {
-                sql_records.push(
-                    `select min, mintime, max, maxtime, null as max_dir, ${m.id} as mid, dateTime ` +
-                    `from archive_day_${m.archive_table} ` +
-                    `where dateTime > ${limits.min} and dateTime <= ${limits.max} order by dateTime`
-                );
-            } else {
-                sql_records.push(
-                    `select min, mintime, max, maxtime, max_dir, ${m.id} as mid, dateTime ` +
-                    `from archive_day_${m.archive_table} ` +
-                    `where dateTime > ${limits.min} and dateTime <= ${limits.max} order by dateTime`
-                );
-            }
-        }
-        return sql_records;
+    public loadRecordSQL(aMesure: MesureItem, limits: dateLimits): string {
+        return 'select DATE_FORMAT(from_unixtime(datetime + 3600 * ' + (this.curPoste as PosteMeteor).getData().delta_timezone + '), \'%Y-%m-%d\') as date_local, ' +
+        aMesure.id + ' as mid, ' +
+            (aMesure.min ? 'min, ' : 'null, ') +
+            (aMesure.min ? 'mintime, ' : 'null, ') +
+            (aMesure.max ? 'max, ' : 'null, ') +
+            (aMesure.max ? 'maxtime, ' : 'null, ') +
+            (aMesure.is_wind == false ? 'null': 'max_dir') + ' as max_dir '+
+            'from archive_day_' + aMesure.archive_table + ' ' +
+            'where dateTime > ' + limits.min + ' and dateTime <= ' + limits.max + ' '+
+            'order by date_local';
     }
 }

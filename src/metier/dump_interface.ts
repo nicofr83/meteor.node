@@ -20,5 +20,5 @@ export interface dateLimits {
 
 export interface Dump_INT {
     archiveDateLimits(): Promise<dateLimits>;
-    getFromDump(curPoste: PosteMeteor, limits: dateLimits): Promise<{archive: any[], records:any[]}>;
-}
+    getFromDump(limits: dateLimits): Promise<{archive: any[], records:any[]}>;
+} 
