@@ -21,6 +21,10 @@ export class DumpMeteor implements Dump_INT {
 
     constructor() {
         this.curPoste = undefined;
+
+        if (meteorDate != true) {
+            throw new Error('meteorDate is not true');
+        }
     }
 
     public async setStationName(meteor: string): Promise<PosteMeteor> {
@@ -46,11 +50,12 @@ export class DumpMeteor implements Dump_INT {
         const myConn = await this.dbMysql.connect(this.meteor);
         const ret = await this.dbMysql.executeSQL(
             myConn,
+            'select ' +
             'true as first_pass, ' +
             'false as stop, ' +
 
-            'select min(datetime) as min, ' +
-            'select min(datetime) as arch_min, ' +
+            'min(datetime) as min, ' +
+            'min(datetime) as arch_min, ' +
             'min(from_unixtime(datetime)) as min_dt, ' +
             'min(from_unixtime(datetime)) as arch_min_dt, ' +
 

@@ -38,7 +38,7 @@ export class RunOnce {
         // Check every second if the queue is empty
         setInterval(() => {
             this.checkQueue();
-        }, 1000);
+        }, 150);
     }
 
     private stopChild(): void {

@@ -7,7 +7,7 @@ class TestRunOnceSvc extends RunOnceSvc {
         super();
         this.name = __filename;
         this.count = 0;
-        console.log('TestRunOnceSvc constructor');
+        // console.log('TestRunOnceSvc constructor');
     }
     public async runMe(data: any): Promise<object|undefined> {
         this.count++;
@@ -15,16 +15,12 @@ class TestRunOnceSvc extends RunOnceSvc {
         return new Promise<object|undefined>((f, reject) => {
             setTimeout(() => {
                 try {
-                    console.log('     runOnceTest: i = '  + data['id'] + ', data: ' + JSON.stringify(data));
-                    // if ((data['id']) % 7 == 0) {
-                    //     console.log('throwing error ' + data['id']);
-                    //     throw new Error('TestRunOnceSvc ' + data['id']);
-                    // }
+                    // console.log('    SVC: ' + JSON.stringify(data) + ', count: ' + this.count);
                     f({'returnedData': {'count': this.count}});
                 } catch (error) {
                     reject(error);
                 }
-            },200);
+            },50);
         });
     }
 }

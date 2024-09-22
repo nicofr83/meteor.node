@@ -59,11 +59,13 @@ export abstract class DB implements DB_INT {
             else
                 myconn = appDbConn;
 
+            this.myLog.debug('query', sql, values);
+
             const res = await this.executeSQL(myconn, sql, values);
 
             if (appDbConn == undefined) {
-                this.disconnect(myconn);
                 this.commitTransaction(myconn);
+                this.disconnect(myconn);
             }
 
             return res as any[];

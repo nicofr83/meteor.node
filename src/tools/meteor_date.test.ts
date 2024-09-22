@@ -52,7 +52,7 @@ describe("MeteorDate Tests", () => {
     it("getNextSlot 15days", () => {
         expect(meteorDate).toBe(true);
         var dt = new Date('2024-01-01T07:32:15Z');
-        console.log(dt.toJSON());
+        // console.log(dt.toJSON());
 
         // 2024-01-01T07:32:15Z => 2024-01-14T20:00:00Z
         var nextDt = dt.getNextSlot(4, 15);

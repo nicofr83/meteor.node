@@ -41,6 +41,6 @@ export class DB_PG extends DB{
             throw new Error('No connection to database');
         }
         // console.log('I am disconnecting!');
-        await pgconn.release();
+        pgconn.release();
     }
 }

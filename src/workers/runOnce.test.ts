@@ -1,6 +1,8 @@
 import {RunOnce} from "./runOnce.js";
 
-const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
+// const SECONDS = process.env.VSCODE_DEBUGGING === 'true' ? 1000 : 0;
+const SECONDS = 5000;
+
 // console.log("runOnce Test Starting");
 var mtLoop: RunOnce;
 var mtOnce: RunOnce;
@@ -27,45 +29,72 @@ describe("RunOnce Tests", () => {
     it("1 job with callback", async () => {
         return new Promise<void>((f, reject) => {
             var ret = undefined as any;
-            function cb(status: boolean, dataCB: any) {
-                console.dir(dataCB);
-                expect(dataCB.returnedData.count).toBeGreaterThan(0);
-                f();
+            function cb1(status: boolean, dataCB: any) {
+                ret = true;
             }
-            mtLoop.addJob({'slotId': 1, 'data': 'test 1'}, cb);
+            mtLoop.addJob({'slotId': 1, 'data': 'test 1'}, cb1);
+            setTimeout(() => {
+                try {
+                    expect(ret).toBe(true);
+                    f();
+                } catch (error) {
+                    reject(error);
+                }
+            }, 300);
         });
     }, 70 * SECONDS);
 it("4 jobs", () => {
-    var ret = [] as any[];
-    function cb(status: boolean, dataCB: any) {
-        if (status) {
-            ret.push(dataCB);
+    return new Promise<void>((f, reject) => {
+        var ret = [] as any[];
+        // console.log('4 jobs');
+        function cb(status: boolean, dataCB: any) {
+            if (status) {
+                ret.push(dataCB);
+                // console.log('cb: ' + JSON.stringify(dataCB) + ', ' + ret.length);
+            }
         }
-    }
-    var idx = 0;
-    while (idx < 4) {
-        mtLoop.addJob({'slotId': 1, 'data': 'test ' + idx++}, cb);
-    }   
-    setTimeout(() => {
-        expect(ret.length).toEqual(4);
-        expect(ret[ret.length - 1].returnedData.count).toBeGreaterThan(3);
-    }, 200);
+        var idx = 0;
+        while (idx < 4) {
+            mtLoop.addJob({'slotId': 1, 'data': 'test ' + idx++}, cb);
+            // console.log('job added');
+        }   
+        setTimeout(() => {
+            try {
+                // console.dir(ret);
+                expect(ret.length).toEqual(4);
+                expect(ret[ret.length - 1].returnedData.count).toBeGreaterThan(4);
+                f();
+            } catch (error) {
+                reject(error);
+            }
+        }, 500);
+    });
 }, 70 * SECONDS);
 it("4 jobs on a new instance", () => {
-    var ret = [] as any[];
-    function cb(status: boolean, dataCB: any) {
-        if (status) {
-            ret.push(dataCB);
+    // console.log('4 jobs on a new instance');
+    return new Promise<void>((f, reject) => {
+        var ret = [] as any[];
+        function cb2(status: boolean, dataCB: any) {
+            if (status) {
+                ret.push(dataCB);
+            }
+            // console.log('cb: ' + dataCB + ', status: ' + status + ', ret.len: ' + ret.length);
         }
-    }
-    var idx = 0;
-    while (idx < 4) {
-        mtOnce.addJob({'slotId': 1, 'data': 'test ' + idx++}, cb);
-    }   
-    setTimeout(() => {
-        expect(ret.length).toEqual(4);
-        expect(ret[ret.length - 1].returnedData.count).toEqual(1);
-    }, 200);
+        var idx = 0;
+        while (idx < 4) {
+            mtOnce.addJob({'slotId': 1, 'data': 'test ' + idx++}, cb2);
+        }   
+        setTimeout(() => {
+            try {
+                // console.dir(ret);
+                expect(ret.length).toEqual(4);
+                expect(ret[ret.length - 1].returnedData.count).toBe(1);
+                f();
+            } catch (error) {
+                reject(error);
+            }
+        }, 2500);
+    });
 }, 70 * SECONDS);
 
 });

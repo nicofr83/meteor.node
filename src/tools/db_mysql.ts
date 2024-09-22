@@ -47,7 +47,8 @@ export class DB_MYSQL extends DB{
     }
 
     async executeSQL(myConn: mysql.PoolConnection, sql: string, values: any): Promise<any[]>{
-        const [rows, fields]  = (await myConn.query(sql, values));
+        // console.log('mysqk.exec: ' + sql);
+        const [rows, fields]  = await myConn.query(sql, values);
         if (rows == undefined) {
             return [];
         }
