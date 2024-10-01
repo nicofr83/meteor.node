@@ -1,4 +1,4 @@
-import { DBOptions, dbConn } from '../tools/db_interface.js'
+import { DBOptions, DBConn } from '../tools/db_interface.js'
 
 export interface EntityData{
     [key: string]: any;
@@ -15,10 +15,10 @@ export interface Entity_INT {
     setTableName(newTableName: string): void;
     getColumnsNames(curData: any, colSpec: string|string[]|undefined): string ;
     buildSelectRequest(dbOptions: DBOptions): string;
-    getOneDBData(pgconn: dbConn|undefined, dbOptions?: DBOptions): Promise<EntityData>;
-    getDBData(pgconn: dbConn|undefined, dbOptions?: DBOptions): Promise<EntityData[]>;
-    updateAll(pgconn: dbConn|undefined, dbOptions?: DBOptions): Promise<any[]>;
-    deleteAll(pgconn: dbConn|undefined, dbOptions?: DBOptions): Promise<any[]>;
-    insertMe(pgconn: dbConn|undefined): Promise<void>;
+    getOneDBData(pgconn: DBConn|undefined, dbOptions?: DBOptions): Promise<EntityData>;
+    getDBData(pgconn: DBConn|undefined, dbOptions?: DBOptions): Promise<EntityData[]>;
+    updateAll(pgconn: DBConn|undefined, dbOptions?: DBOptions): Promise<any[]>;
+    deleteAll(pgconn: DBConn|undefined, dbOptions?: DBOptions): Promise<any[]>;
+    insertMe(pgconn: DBConn|undefined): Promise<void>;
 }
 

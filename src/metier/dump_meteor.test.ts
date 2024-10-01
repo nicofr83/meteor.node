@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { Container } from 'typedi';
 import { DumpMeteor } from "./dump_meteor.js";
-import { dateLimits } from './dump_interface.js';
+import { dateLimits } from './dump_meteor_interface.js';
 import { MesureMeteor } from './mesure_meteor.js';
 import { DB_MYSQL } from '../tools/db_mysql.js';
 

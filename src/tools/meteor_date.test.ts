@@ -55,7 +55,7 @@ describe("MeteorDate Tests", () => {
         // console.log(dt.toJSON());
 
         // 2024-01-01T07:32:15Z => 2024-01-14T20:00:00Z
-        var nextDt = dt.getNextSlot(4, 15);
+        var nextDt = dt.getNextDate(4, 15);
         // console.log(nextDt.toJSON());
         expect(nextDt.getMonth()+1).toEqual(1);
         expect(nextDt.getDate()).toEqual(14);
@@ -64,14 +64,14 @@ describe("MeteorDate Tests", () => {
         expect(nextDt.getSeconds()).toEqual(0);
 
         // 2024-01-14T20:00:00Z => 2024-01-31T20:00:00Z
-        nextDt = nextDt.getNextSlot(4, 15);
+        nextDt = nextDt.getNextDate(4, 15);
         // console.log(nextDt.toJSON());
         expect(nextDt.getMonth()+1).toEqual(1);
         expect(nextDt.getDate()).toEqual(31);
         expect(nextDt.getHours()).toEqual(20);
 
         // 2024-01-31T20:00:00Z => 2024-02-14T20:00:00Z
-        nextDt = nextDt.getNextSlot(4, 15);
+        nextDt = nextDt.getNextDate(4, 15);
         // console.log(nextDt.toJSON());
         expect(nextDt.getMonth()+1).toEqual(2);
         expect(nextDt.getDate()).toEqual(14);
@@ -80,7 +80,7 @@ describe("MeteorDate Tests", () => {
         var dt =  new Date('2024-01-01T02:32:15Z');
 
         // 2024-01-01T02:32:15Z => ...
-        nextDt = dt.getNextSlot(4, 15);
+        nextDt = dt.getNextDate(4, 15);
         // console.log(dt.toJSON() + ' -> ' + nextDt.toJSON());
         expect(nextDt.getMonth()+1).toEqual(1);
         expect(nextDt.getDate()).toEqual(14);
@@ -90,7 +90,7 @@ describe("MeteorDate Tests", () => {
 
         dt = new Date('2024-01-01T22:33:44Z');
         // 2024-01-01T22:33:44Z => 2024-01-31T20:00:00.000Z
-        nextDt = dt.getNextSlot(4, 15);
+        nextDt = dt.getNextDate(4, 15);
         // console.log(dt.toJSON() + ' -> ' + nextDt.toJSON());
         expect(nextDt.getMonth()+1).toEqual(1);
         expect(nextDt.getDate()).toEqual(31);
@@ -103,7 +103,7 @@ describe("MeteorDate Tests", () => {
         var dt = new Date('2024-01-01T07:32:15Z');
 
         // 2024-01-01T07:32:15Z => 2024-01-31T20:00:00.000Z
-        var nextDt = dt.getNextSlot(4, 30);
+        var nextDt = dt.getNextDate(4, 30);
         // console.log(dt.toJSON() + ' => ' +nextDt.toJSON());
         expect(nextDt.getMonth()+1).toEqual(1);
         expect(nextDt.getDate()).toEqual(31);
@@ -113,7 +113,7 @@ describe("MeteorDate Tests", () => {
 
         // 2024-01-31T20:00:00.000Z => 2024-02-29T20:00:00.000Z
         dt = nextDt;
-        nextDt = nextDt.getNextSlot(4, 30);
+        nextDt = nextDt.getNextDate(4, 30);
         // console.log(dt.toJSON() + ' => ' +nextDt.toJSON());
         expect(nextDt.getMonth()+1).toEqual(2);
         expect(nextDt.getDate()).toEqual(29);
@@ -121,7 +121,7 @@ describe("MeteorDate Tests", () => {
 
         // 2024-02-29T20:00:00.000Z => 2024-03-31T20:00:00.000Z
         dt = nextDt;
-        nextDt = nextDt.getNextSlot(4, 30);
+        nextDt = nextDt.getNextDate(4, 30);
         // console.log(dt.toJSON() + ' => ' +nextDt.toJSON());
         expect(nextDt.getMonth()+1).toEqual(3);
         expect(nextDt.getDate()).toEqual(31);

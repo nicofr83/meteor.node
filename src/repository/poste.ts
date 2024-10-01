@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { Service, Container} from 'typedi';
 import {DB_PG } from "../tools/db_pg.js";
-import { dbConn, DBOptions } from '../tools/db_interface.js';
+import { DBConn, DBOptions } from '../tools/db_interface.js';
 import {Entity} from "./entity.js";
 import {Poste_INT, PosteData} from './poste_interface.js';
 
@@ -34,14 +34,14 @@ export class Poste extends Entity implements Poste_INT {
             }
             this.setTableName('postes');
         }
-        public static async getOne(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Poste> {
+        public static async getOne(pgconn: DBConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Poste> {
             var my_poste = new Poste()
             const posteData = (await my_poste.getOneDBData(pgconn, dbOptions)) as PosteData;
             my_poste = new Poste(posteData);
             return my_poste;
         }
 
-        public static async getAll(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Poste[]> {
+        public static async getAll(pgconn: DBConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<Poste[]> {
             const all_postes: Poste[] = [];
             var my_poste = new Poste()
             const allData = await my_poste.getDBData(pgconn, dbOptions);
@@ -52,7 +52,7 @@ export class Poste extends Entity implements Poste_INT {
             return all_postes;
         }
 
-        public static async liste(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<PosteData[]> {
+        public static async liste(pgconn: DBConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<PosteData[]> {
             const all_postes: Poste[] = [];
             const my_poste = new Poste();
             var sqlRequest = my_poste.buildSelectRequest(dbOptions);
@@ -62,7 +62,7 @@ export class Poste extends Entity implements Poste_INT {
             return allData;
         }
 
-        public async updateMe(pgconn: dbConn|undefined): Promise<number|undefined>{
+        public async updateMe(pgconn: DBConn|undefined): Promise<number|undefined>{
             if (this.getData().id == undefined) {
                 throw new Error('Poste not loaded, then cannot updateMe');
             }
@@ -73,7 +73,7 @@ export class Poste extends Entity implements Poste_INT {
             return updatedIds[0];
         }
 
-        public async deleteMe(pgconn: dbConn|undefined): Promise<number|undefined>{
+        public async deleteMe(pgconn: DBConn|undefined): Promise<number|undefined>{
             if (this.getData().id == undefined) {
                 throw new Error('Poste not loaded, then cannot deleteMe');
             }

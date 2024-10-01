@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { Container } from 'typedi';
 import { DB_PG } from "../tools/db_pg.js";
-import { DB_INT, dbConn, DBOptions } from "../tools/db_interface.js";
+import { DB_INT, DBConn, DBOptions } from "../tools/db_interface.js";
 import { DBLock } from "../tools/enums.js";
 import { Entity_INT, EntityData } from './entity_interface.js'
 
@@ -117,19 +117,19 @@ export class Entity implements Entity_INT{
         return sql;
     }
 
-    public async getOneDBData(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<EntityData> {
+    public async getOneDBData(pgconn: DBConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<EntityData> {
         dbOptions['limit'] = 1;
         const sql = this.buildSelectRequest(dbOptions);
         const dataFromSQL = await this.db.execute(pgconn, sql, []);
         return dataFromSQL;
     }
-    public async getDBData(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<EntityData[]> {
+    public async getDBData(pgconn: DBConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<EntityData[]> {
         const sql = this.buildSelectRequest(dbOptions);
         const dataFromSQL = await this.db.query(pgconn, sql, []);
         return dataFromSQL;
     }
 
-    public async updateAll(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<any[]> {
+    public async updateAll(pgconn: DBConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<any[]> {
         if (this.isDirty) {
             if (!dbOptions.hasOwnProperty('where') || !dbOptions.where) {
                 throw new Error('updateAll needs a where clause');
@@ -161,7 +161,7 @@ export class Entity implements Entity_INT{
         }
         return [];
     }
-    public async deleteAll(pgconn: dbConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<any[]> {
+    public async deleteAll(pgconn: DBConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<any[]> {
         if (!dbOptions.hasOwnProperty('where') || !dbOptions.where) {
             throw new Error('deleteAll needs a where clause');
         }
@@ -178,7 +178,7 @@ export class Entity implements Entity_INT{
         const deletedKeys = await instanceDB.query(pgconn, sql);
         return deletedKeys
     }
-    public async insertMe(pgconn: dbConn|undefined): Promise<void> {
+    public async insertMe(pgconn: DBConn|undefined): Promise<void> {
         // multiple rows insert
         // const sql = "insert into nico(num, name) values($1, $2) returning *";
         // const values = [[1, 'nico'], [2, 'nico2'], [3, 'nico3']];

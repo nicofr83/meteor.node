@@ -2,7 +2,6 @@ import 'reflect-metadata';
 import { Service } from 'typedi';
 import {Mesure} from '../repository/mesure.js';
 import {MesureMeteor_INT, MesureData, MesureItem } from './mesure_meteor_interface.js'
-import {Aggreg_Type} from '../tools/enums.js';
 import {DBOptions} from '../tools/db_interface.js';
 
 @Service({ transient: true })

@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { Container } from 'typedi';
 import { DB_PG } from "../tools/db_pg.js";
-import { dbConn, DBOptions } from "../tools/db_interface.js"
+import { DBConn, DBOptions } from "../tools/db_interface.js"
 import { Mesure} from "./mesure.js";
 import { MesureData } from './mesure_interface';
 
@@ -14,7 +14,7 @@ describe("Mesure test", () => {
     }, 700 * SECONDS);
     it("getColumnsName getOne with cxion", async () => {
         const db = Container.get(DB_PG) as DB_PG;
-        const pgConn = await db.beginTransaction() as dbConn;
+        const pgConn = await db.beginTransaction() as DBConn;
         const myMesure = await Mesure.getOne(pgConn, {'where': 'id = 1'} as DBOptions);
         await db.commitTransaction(pgConn);
         await db.disconnect(pgConn);

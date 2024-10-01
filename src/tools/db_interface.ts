@@ -13,15 +13,15 @@ export interface DBOptions {
 }
 
 // export type dbConn = PoolClient | mysql.PoolConnection;
-export type dbConn = any;
+export type DBConn = any;
 
 export interface DB_INT {
     getInstanceCount(): number;
-    beginTransaction(pgconn?: dbConn): Promise<dbConn>;
-    commitTransaction(pgconn: dbConn): Promise<void>;
-    rollbackTransaction(pgconn: dbConn): Promise<void>;
-    query(pgconn: dbConn | undefined, sql: string, values?: any): Promise<any[]> ;
-    execute(pgconn: dbConn | undefined, sql: string, values?: any): Promise<any>;
+    beginTransaction(pgconn?: DBConn): Promise<DBConn>;
+    commitTransaction(pgconn: DBConn): Promise<void>;
+    rollbackTransaction(pgconn: DBConn): Promise<void>;
+    query(pgconn: DBConn | undefined, sql: string, values?: any): Promise<any[]> ;
+    execute(pgconn: DBConn | undefined, sql: string, values?: any): Promise<any>;
 
     // abstract
     // connect(dbName?: string|undefined): Promise<pg.Pool>;

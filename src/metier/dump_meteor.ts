@@ -1,12 +1,14 @@
 import 'reflect-metadata';
 import { Service, Container } from 'typedi';
-import { dateLimits, Dump_INT } from './dump_interface.js'
+import { dateLimits, Dump_INT } from './dump_meteor_interface.js'
 import { DBOptions } from '../tools/db_interface.js';
 import { meteorDate } from '../tools/meteor_date.js';
 import { Log } from '../tools/log.js';
 import { DB_MYSQL } from '../tools/db_mysql.js';
 import { MesureMeteor } from './mesure_meteor.js';
-import { MesureItem } from './mesure_meteor_interface.js';
+import { MesureItem} from './mesure_meteor_interface.js';
+
+import { DumpArchive, DumpRecords, DumpArray} from './dump_meteor_interface.js';
 import { PosteMeteor } from './poste_meteor.js';
 import { AnyARecord } from 'node:dns';
 
@@ -82,19 +84,10 @@ export class DumpMeteor implements Dump_INT {
         return ret[0] as dateLimits;
     }
 
-    public async getFromDump(limits: dateLimits): Promise<{archive: any[], records:any[]}> {
-        var ret = {archive: [] as any[], records: [] as any[]};
+    public async getFromDump(limits: dateLimits): Promise<DumpArray> {
+        var ret = {archive: [] as any[], records: [] as any[]} as DumpArray
 
         const mAll = await this.myMesure.getListe();
-        // calling process should do:
-        // var dateLimits = await this.archiveDateLimits();
-        // if (dateLimits.min_dt < curPoste.getData().last_obs_date_local) {
-        //     dateLimits.min_dt = curPoste.getData().last_obs_date_local;
-        //     dateLimits.min = Math.floor(new Date('2012.08.10').getTime() / 1000);
-        // }
-        // save max/max_dt
-        // dateLimits = this.getNextSlot(dateLimits, true);
-
 
         ret.archive = await this.loadArchiveData(mAll, limits);
         ret.records = await this.loadRecordsData(mAll, limits);
@@ -102,7 +95,13 @@ export class DumpMeteor implements Dump_INT {
         return ret;
     }
 
-    public getNextSlot(prevLimits: dateLimits, IsItFirstCall: boolean = false): dateLimits {
+    public async getFirstSlot(): Promise<dateLimits>{
+        var dl = await this.archiveDateLimits();
+        dl.first_pass == true
+        return this.getNextSlot(dl);
+    }
+
+    public getNextSlot(prevLimits: dateLimits, nbDays: number = 15): dateLimits {
         if (prevLimits.stop) {
             return prevLimits;
         }
@@ -122,13 +121,13 @@ export class DumpMeteor implements Dump_INT {
         prevLimits.min = prevLimits.max;
         prevLimits.min_dt = prevLimits.max_dt;
 
-        prevLimits.max_dt = prevLimits.max_dt.getNextSlot(this.deltaTimezone, 15);
+        prevLimits.max_dt = prevLimits.max_dt.getNextDate(this.deltaTimezone, nbDays);
         prevLimits.max = Math.floor(prevLimits.max_dt.getTime() / 1000);
 
         return prevLimits;
     }
 
-    private async loadArchiveData(mAll: MesureItem[], limits: dateLimits): Promise<any[]> {
+    private async loadArchiveData(mAll: MesureItem[], limits: dateLimits): Promise<DumpArchive[]> {
         const sql_archive = this.loadArchiveSQL(mAll, limits);
 
         const myConn = await this.dbMysql.connect(this.meteor);
@@ -174,11 +173,6 @@ export class DumpMeteor implements Dump_INT {
     }
 
     public loadArchiveSQL(mAll: MesureItem[], limits: dateLimits): string {
-    // date_local
-    // date_utc
-    // poste
-    // duration
-    
         var sql = 'select' +
             ' from_unixtime(datetime + 3600 * ' + (this.curPoste as PosteMeteor).getData().delta_timezone + ') as date_local,' +
             ' from_unixtime(datetime) as date_utc,'+

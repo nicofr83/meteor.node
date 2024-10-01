@@ -1,5 +1,5 @@
 import { Entity_INT, EntityData } from './entity_interface.js';
-import { dbConn } from '../tools/db_interface.js';
+import { DBConn } from '../tools/db_interface.js';
 
 import {DataSource, LoadType} from '../tools/enums.js';
 
@@ -22,6 +22,6 @@ export interface PosteData extends EntityData{
 }
 
 export interface Poste_INT extends Entity_INT {
-    updateMe(pgconn: dbConn|undefined): Promise<number|undefined>;
-    deleteMe(pgconn: dbConn|undefined): Promise<number|undefined>;
+    updateMe(pgconn: DBConn|undefined): Promise<number|undefined>;
+    deleteMe(pgconn: DBConn|undefined): Promise<number|undefined>;
 }

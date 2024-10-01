@@ -7,7 +7,7 @@ declare global {
         getMaxDays(): number;
         UtcToLocalDate(deltaTimeZone: number): Date;
         LocalToUtcDate(deltaTimeZone: number): Date;
-        getNextSlot(deltaTimeZone: number, nbDays: number): Date;
+        getNextDate(deltaTimeZone: number, nbDays: number): Date;
     }
 }
 
@@ -34,7 +34,7 @@ Date.prototype.LocalToUtcDate = function(deltaTimeZone: number) {
     return new Date(this.getTime() - deltaTimeZone * 3600 * 1000);
 }
 
-Date.prototype.getNextSlot = function(deltaTimeZone: number, nbDays: number) {
+Date.prototype.getNextDate = function(deltaTimeZone: number, nbDays: number) {
     var dtLocal = new Date(this.UtcToLocalDate(deltaTimeZone).toJSON());
 
     dtLocal.addHeures(24 * nbDays);
