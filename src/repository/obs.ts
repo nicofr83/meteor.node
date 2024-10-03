@@ -4,10 +4,13 @@ import { DB_PG } from "../tools/db_pg.js";
 import { DBOptions, DBConn } from "../tools/db_interface.js";
 import { Entity } from "./entity.js";
 import { Obs_INT, ObsData } from './obs_interface.js';
+import { MesureMeteor } from '../metier/mesure_meteor.js';
+import { MesureItem } from '../metier/mesure_meteor_interface.js';
 // import {Code_QA} from '../tools/enums';
 
 @Service({ transient: true })
 export class Obs extends Entity implements Obs_INT {
+    private mAll: MesureItem[] = []
 
     constructor(myData: ObsData = {} as ObsData) {
         if (JSON.stringify(myData) != '{}') {
@@ -108,6 +111,23 @@ export class Obs extends Entity implements Obs_INT {
         return allData;
     }
 
+    public async getInsertBulkSQL(): Promise<{sql: string, nbFields: number}> {
+        if (this.mAll.length == 0) {
+            this.mAll = await Container.get(MesureMeteor).getListe();
+        }
+        const sqlBulk = {sql: 'insert into ' + this.getTableName() + '(date_local, date_utc, poste_id, duration, ', nbFields: 4};
+    
+        for (var aMesure of this.mAll) {
+            if (aMesure.archive_col == undefined) {
+                continue;
+            }
+            sqlBulk.sql += aMesure.json_input + ', ';
+            sqlBulk.nbFields ++;
+        }
+        sqlBulk.sql = sqlBulk.sql.substring(0, sqlBulk.sql.length - 2) as string;
+        sqlBulk.sql += ') ';
+        return sqlBulk;
+    }
     public async updateMe(pgconn: DBConn | undefined): Promise<number | undefined> {
         if (this.getData().id == undefined) {
             throw new Error('Obs not loaded, then cannot updateMe');

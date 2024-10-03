@@ -11,7 +11,7 @@ export abstract class DataLoader implements DataLoader_INT {
 
         for (let i = 0; i < data.length; i += chunkSize) {
             const chunk = data.slice(i, i + chunkSize);
-            const placeholders = chunk.map((_: any, index: number) => `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3})`).join(',');
+            const placeholders = chunk.map((_: any, idx: number) => `($${idx * 3 + 1}, $${idx * 3 + 2}, $${idx * 3 + 3})`).join(',');
             const values = chunk.flat();
 
             const insertQuery = `
@@ -24,6 +24,7 @@ export abstract class DataLoader implements DataLoader_INT {
         const duration = (Date.now() - startTime) / 1000;
         console.log(`Multi-line INSERT took: ${duration} seconds`);
     }
+
     public async flushRecords(client: any, data: DumpRecords[]): Promise<void> {
     }
 }

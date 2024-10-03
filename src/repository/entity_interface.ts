@@ -17,6 +17,7 @@ export interface Entity_INT {
     buildSelectRequest(dbOptions: DBOptions): string;
     getOneDBData(pgconn: DBConn|undefined, dbOptions?: DBOptions): Promise<EntityData>;
     getDBData(pgconn: DBConn|undefined, dbOptions?: DBOptions): Promise<EntityData[]>;
+    count(pgconn: DBConn|undefined, dbOptions?: DBOptions): Promise<any>;
     updateAll(pgconn: DBConn|undefined, dbOptions?: DBOptions): Promise<any[]>;
     deleteAll(pgconn: DBConn|undefined, dbOptions?: DBOptions): Promise<any[]>;
     insertMe(pgconn: DBConn|undefined): Promise<void>;

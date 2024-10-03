@@ -72,4 +72,5 @@ export interface ObsData extends EntityData{
 export interface Obs_INT extends Entity_INT {
     updateMe(pgconn: DBConn|undefined): Promise<number|undefined>;
     deleteMe(pgconn: DBConn|undefined): Promise<number|undefined>;
+    getInsertBulkSQL(): Promise<{sql: string, nbFields: number}>;
 }

@@ -37,7 +37,7 @@ export abstract class DB implements DB_INT {
         if (myConn == undefined) {
             throw new Error('No connection to database');
         }
-        await this.executeSQL(myConn, 'BEGIN');
+        await this.executeSQL(myConn, 'COMMIT');
     }
 
     async rollbackTransaction(myConn: DBConn): Promise<void> {

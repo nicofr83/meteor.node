@@ -178,6 +178,11 @@ export class Entity implements Entity_INT{
         const deletedKeys = await instanceDB.query(pgconn, sql);
         return deletedKeys
     }
+    public async count(pgconn: DBConn|undefined, dbOptions: DBOptions = {} as DBOptions): Promise<any>{
+        const sql = 'select count(*) as count from ' + this.tableName;
+        const dataFromSQL = await this.db.execute(pgconn, sql, []);
+        return dataFromSQL;
+    }
     public async insertMe(pgconn: DBConn|undefined): Promise<void> {
         // multiple rows insert
         // const sql = "insert into nico(num, name) values($1, $2) returning *";
