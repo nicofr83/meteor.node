@@ -6,12 +6,13 @@ import { PosteMeteor } from "../../metier/poste_meteor.js";
 import { MesureMeteor } from "../../metier/mesure_meteor.js";
 import { DBOptions } from '../../tools/db_interface.js';
 import { MesureItem } from '../../metier/mesure_meteor_interface.js';
-import { DumpRecords, DumpArray } from '../../dataLoader/dataLoader_interface.js';
+import { DumpArchive, DumpRecords, DumpArray } from '../../dataLoader/dataLoader_interface.js';
 import { DB_PG } from "../../tools/db_pg.js";
+import { DBConn } from '../../tools/db_interface.js';
 
 class Migrate extends RunOnceSvc {
     private myDump = Container.get(DumpLoader);
-    private myPoste : PosteMeteor | undefined;
+    private myPoste = Container.get(PosteMeteor);
     private myMesure = Container.get(MesureMeteor);
     private mAll: MesureItem[] = [];
     private myLog = Container.get(Log);
@@ -19,7 +20,6 @@ class Migrate extends RunOnceSvc {
 
     constructor() {
         super();
-        this.myPoste = undefined;
     }
 
     public async runMe(data: any): Promise<object | undefined> {
@@ -36,15 +36,17 @@ class Migrate extends RunOnceSvc {
 
                 while (dateLimits.min < maxDate) {
                     await this.pgInstance.beginTransaction(client);
-
                     var dumpData = await this.myDump.getFromDump(dateLimits);
                     this.addMesureValueToRecords(dumpData);
+                    const cleanRecords = this.cleanUpRecords(dumpData);
 
-                    this.myDump.flushObs(client, dumpData.archive);
-                    this.myDump.flushRecords(client, this.cleanUpRecords(dumpData));
+                    await this.loadArchiveData(client, dumpData.archive);
+                    await this.loadRecordsData(client, cleanRecords);
+
+
+                    dateLimits = this.myDump.getNextSlot(dateLimits);
 
                     await this.pgInstance.commitTransaction(client);
-                    dateLimits = this.myDump.getNextSlot(dateLimits);
                 }
                 f(undefined);
 
@@ -57,20 +59,32 @@ class Migrate extends RunOnceSvc {
             }
         });
     }
-  
+    private async loadArchiveData(client: DBConn, archiveData: DumpArchive[]) {
+        if (archiveData.length == 0) {
+            return;
+        }
+        
+    }
+
+    private async loadRecordsData(client: DBConn, records: DumpRecords[]) {
+        if (records.length == 0) {
+            return;
+        }
+    }
+
     private addMesureValueToRecords(dumpData: DumpArray) {
         for (const anArchiveData of dumpData.archive) {
             for (const aMesure of this.mAll) {
                 if (aMesure.min == true || aMesure.max == true) {
                     dumpData.records.push({
                         date_local: anArchiveData.date_local,
-                        mid: aMesure.id as bigint,
+                        mid: aMesure.id,
                         min: aMesure.min == true ? anArchiveData[aMesure.json_input as string] : undefined,
-                        mintime: aMesure.min == true ? new Date(anArchiveData.date_local.setHours(0,0,0,0)) : undefined,
+                        mintime: aMesure.min == true ? anArchiveData.date_local.setHours(0,0,0,0) : undefined,
                         max:  aMesure.max == true ? anArchiveData[aMesure.json_input as string] : undefined,
-                        maxtime: aMesure.max == true ? new Date(anArchiveData.date_local.setHours(0,0,0,0)) : undefined,
-                        max_dir: anArchiveData.max_diDumpRecords,
-                    });
+                        maxtime: aMesure.max == true ? anArchiveData.date_local.setHours(0,0,0,0) : undefined,
+                        max_dir: anArchiveData.max_dir,
+                    } as DumpRecords);
                 }
             }
         }

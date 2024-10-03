@@ -5,7 +5,7 @@ class PosteRoutes {
   router = Router();
 
   constructor() {
-    this.router.get("/getDumpedPostes", getDumpedPostes);
+    this.router.get("/getDumpedPostes", getDumpedPostes as any);
   }
 }
 

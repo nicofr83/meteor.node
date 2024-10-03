@@ -1,26 +1,29 @@
-import 'reflect-metadata';
-import { Service } from 'typedi';
-import { DataStations, DataOneStation, DataMin, DataMax } from "./dataLoader_interface";
+import { DumpArchive, DumpRecords, DumpArray, DataLoader_INT } from './dataLoader_interface.js';
 
-@Service({transient: true})
-export class DataLoader{
+export abstract class DataLoader implements DataLoader_INT {
     constructor() {
 
     }
 
-    public async load(
-        data: DataStations|DataOneStation,
-        dataMin: Array<DataMin>=Array<DataMin>(),
-        dataMax: Array<DataMax> = new Array<DataMax>()): Promise<void>{
+    public async flushObs(client: any, data: DumpArchive[]): Promise<void> {
+        const chunkSize = 1000;
+        const startTime = Date.now();
 
-        // Add current values and min/max from data to dataMin/dataMax, and min/max from data
+        for (let i = 0; i < data.length; i += chunkSize) {
+            const chunk = data.slice(i, i + chunkSize);
+            const placeholders = chunk.map((_: any, index: number) => `($${index * 3 + 1}, $${index * 3 + 2}, $${index * 3 + 3})`).join(',');
+            const values = chunk.flat();
 
-        // Sort dataMin/dataMax by poste_id/date_local/mesure_id
+            const insertQuery = `
+                INSERT INTO test_table (data, nombre, time_added) VALUES ${placeholders}
+            `;
 
-        // keep only 2 records max per date_local
+            await client.query(insertQuery, values);
+        }
 
-        // insert data/dataMin/dataMax into database
-
-        // commit
+        const duration = (Date.now() - startTime) / 1000;
+        console.log(`Multi-line INSERT took: ${duration} seconds`);
+    }
+    public async flushRecords(client: any, data: DumpRecords[]): Promise<void> {
     }
 }

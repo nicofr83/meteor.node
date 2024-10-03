@@ -2,7 +2,7 @@ import { RunOnceSvc } from '../runOnceSvc.js';
 import * as fs from "fs";
 import * as path from "path";
 import watch from "node-watch";
-import { JsonLoader } from "./jsonLoader.js";
+import { JsonLoaderWorker } from "./jsonLoader.js";
 
 class LoadJson extends RunOnceSvc {
     private timeOutTimer: NodeJS.Timeout|undefined;
@@ -16,7 +16,7 @@ class LoadJson extends RunOnceSvc {
     constructor() {
         super();
         const filePath = __filename.toString().split('/');
-        this.name =filePath[filePath.length - 1];
+        this.name = filePath[filePath.length - 1];
         this.autoLoadDir = process.env.AUTOLOAD || './data/autoload';
         this.archiveDir = process.env.ARCHIVE || './data/archive';
         const tmpNoArch = process.env.NOARCHIVE || 'true';

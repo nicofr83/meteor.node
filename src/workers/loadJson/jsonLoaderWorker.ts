@@ -1,25 +1,25 @@
 import 'reflect-metadata';
 import {Container, Service} from 'typedi';
-import { DataStations } from "../../dataLoader/dataLoader_interface";
+import { DataStations } from "../../dataLoader/json/jsonLoader_interface";
 import { Log } from '../../tools/log.js';
-import { DataLoader } from '../../dataLoader/dataLoader';
+import { JsonLoader } from '../../dataLoader/json/jsonLoader.js';
 import fs from "fs";
 import { checkJson } from './jsonValidator';
 
 @Service({transient: true})
-export class JsonLoader{
+export class JsonLoaderWorker{
     private myLog: Log;
     private dataSations: DataStations;
-    private dataLoader: DataLoader;
+    private jsonLoader: JsonLoader;
 
     constructor() {
         this.myLog = Container.get(Log);
-        this.dataLoader = Container.get(DataLoader);
+        this.jsonLoader = Container.get(JsonLoader);
         this.dataSations = [];
     }
     public async  processFile(filename: string): Promise<void>{
         this.myLog.info('jsonLoader', `processFile: ${filename}`);
-        this.dataLoader.load(this.dataSations);
+        // this.dataLoader.load(this.dataSations);
     }
 
     public async loadJsonFile(filename: string): Promise<any> {

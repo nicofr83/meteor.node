@@ -1,4 +1,4 @@
-import { DataStations, DataOneStation, DataJson, dataJsonKeys } from '../../dataLoader/dataLoader_interface'
+import { DataStations, DataOneStation, DataJson, dataJsonKeys } from '../../dataLoader/json/jsonLoader_interface'
 
 interface UpdateItem {
     [key: string]: any;

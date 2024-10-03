@@ -1,19 +1,18 @@
 import 'reflect-metadata';
 import { Service, Container } from 'typedi';
-import { dateLimits, Dump_INT } from './dump_meteor_interface.js'
-import { DBOptions } from '../tools/db_interface.js';
-import { meteorDate } from '../tools/meteor_date.js';
-import { Log } from '../tools/log.js';
-import { DB_MYSQL } from '../tools/db_mysql.js';
-import { MesureMeteor } from './mesure_meteor.js';
-import { MesureItem} from './mesure_meteor_interface.js';
-
-import { DumpArchive, DumpRecords, DumpArray} from './dump_meteor_interface.js';
-import { PosteMeteor } from './poste_meteor.js';
-import { AnyARecord } from 'node:dns';
+import { dateLimits, DumpLoader_INT } from './dumpLoader_interface.js'
+import { DBOptions } from '../../tools/db_interface.js';
+import { meteorDate } from '../../tools/meteor_date.js';
+import { Log } from '../../tools/log.js';
+import { DB_MYSQL } from '../../tools/db_mysql.js';
+import { MesureMeteor } from '../../metier/mesure_meteor.js';
+import { MesureItem} from '../../metier/mesure_meteor_interface.js';
+import { DataLoader } from '../dataLoader.js';
+import { DumpArchive, DumpRecords, DumpArray} from '../dataLoader_interface.js';
+import { PosteMeteor } from '../../metier/poste_meteor.js';
 
 @Service({ transient: true })
-export class DumpMeteor implements Dump_INT {
+export class DumpLoader extends DataLoader implements DumpLoader_INT {
     private meteor: string| undefined;
     private curPoste: PosteMeteor | undefined;
     private deltaTimezone: number = 0;
@@ -23,17 +22,18 @@ export class DumpMeteor implements Dump_INT {
     private myMesure = Container.get(MesureMeteor);
 
     constructor() {
+        super();
         this.curPoste = undefined;
         this.meteor = undefined;
 
         if (meteorDate != true) {
-            throw new Error('meteorDate is not true');
-        }
+            throw new Error('meteorDate is not loaded');
+        }    
     }
-
-    public async setStationName(meteor: string): Promise<PosteMeteor> {
+    
+    public setStation(meteor: string, cur_poste: PosteMeteor): void {
         this.meteor = meteor;
-        this.curPoste = await PosteMeteor.getOne(undefined, {'where': `meteor = \'${meteor}\'`} as DBOptions);
+        this.curPoste = cur_poste;
         if (this.curPoste === undefined) {
             throw new Error('Station ' + meteor + ' non trouvée');
         }
@@ -44,7 +44,6 @@ export class DumpMeteor implements Dump_INT {
         if ( this.last_obs_date_utc != undefined) {
             this.last_obs_date_utc = this.last_obs_date_utc.LocalToUtcDate(this.deltaTimezone);
         }
-        return this.curPoste;
     }
 
     public async archiveDateLimits(): Promise<dateLimits>{
@@ -101,7 +100,7 @@ export class DumpMeteor implements Dump_INT {
         return this.getNextSlot(dl);
     }
 
-    public getNextSlot(prevLimits: dateLimits, nbDays: number = 15): dateLimits {
+    public getNextSlot(prevLimits: dateLimits, nbDays: number = 30): dateLimits {
         if (prevLimits.stop) {
             return prevLimits;
         }
@@ -127,16 +126,25 @@ export class DumpMeteor implements Dump_INT {
         return prevLimits;
     }
 
-    private async loadArchiveData(mAll: MesureItem[], limits: dateLimits): Promise<DumpArchive[]> {
+    public async loadArchiveData(mAll: MesureItem[], limits: dateLimits): Promise<DumpArchive[]> {
+        var archData = [] as DumpArchive[];
+        var myConn: any = undefined;
         const sql_archive = this.loadArchiveSQL(mAll, limits);
 
-        const myConn = await this.dbMysql.connect(this.meteor);
-        const archData = await this.dbMysql.executeSQL(myConn, sql_archive, []);
-
+        try {
+            myConn = await this.dbMysql.connect(this.meteor);
+            archData = await this.dbMysql.executeSQL(myConn, sql_archive, []);
+        }
+        finally {
+            if (myConn != undefined) {
+                this.dbMysql.disconnect(myConn);
+                myConn = undefined;
+            }
+        }
         return archData;
     }
 
-    private async loadRecordsData(mAll: MesureItem[], limits: dateLimits): Promise<any[]> {
+    public async loadRecordsData(mAll: MesureItem[], limits: dateLimits): Promise<any[]> {
         const recData = [] as any[];
         var myConn: any = undefined;
         try {
