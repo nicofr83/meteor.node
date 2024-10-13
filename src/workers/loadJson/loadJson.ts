@@ -2,7 +2,7 @@ import { RunOnceSvc } from '../runOnceSvc.js';
 import * as fs from "fs";
 import * as path from "path";
 import watch from "node-watch";
-import { JsonLoaderWorker } from "./jsonLoader.js";
+import { JsonLoaderWorker } from "./jsonLoaderWorker.js";
 
 class LoadJson extends RunOnceSvc {
     private timeOutTimer: NodeJS.Timeout|undefined;
@@ -117,7 +117,7 @@ class LoadJson extends RunOnceSvc {
 
         const baseFileName = path.basename(tmpFileName);
         try {
-            const jsonLoader = new JsonLoader();
+            const jsonLoader = new JsonLoaderWorker();
             console.log('    ---- calling our class with filename: ' + tmpFileName);
             await jsonLoader.processFile(tmpFileName)
 

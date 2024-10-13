@@ -20,6 +20,7 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
     private dbMysql = Container.get(DB_MYSQL);
     private myLog = Container.get(Log);
     private myMesure = Container.get(MesureMeteor);
+    // private mAll: MesureItem[] = [];
 
     constructor() {
         super();
@@ -86,10 +87,10 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
     public async getFromDump(limits: dateLimits): Promise<DumpArray> {
         var ret = {archive: [] as any[], records: [] as any[]} as DumpArray
 
-        const mAll = await this.myMesure.getListe();
+        this.mAll = await this.myMesure.getListe();
 
-        ret.archive = await this.loadArchiveData(mAll, limits);
-        ret.records = await this.loadRecordsData(mAll, limits);
+        ret.archive = await this.loadArchiveData(this.mAll, limits);
+        ret.records = await this.loadRecordsData(this.mAll, limits);
 
         return ret;
     }
@@ -144,7 +145,7 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
         return archData;
     }
 
-    public async loadRecordsData(mAll: MesureItem[], limits: dateLimits): Promise<any[]> {
+    public async loadRecordsData(mAll: MesureItem[], dateLimits: dateLimits): Promise<any[]> {
         const recData = [] as any[];
         var myConn: any = undefined;
         try {
@@ -153,18 +154,20 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
                 if (aMesure.archive_table == undefined || (aMesure.min == false && aMesure.max == false)) {
                     continue;
                 }
-                const sql_minmax = this.loadRecordSQL(aMesure, limits);
+                const sql_minmax = this.loadRecordSQL(aMesure, dateLimits);
                 const recMinMax = await this.dbMysql.executeSQL(myConn, sql_minmax, []);
                 for (const rec of recMinMax) {
-                    recData.push({
-                        'mid': aMesure.id,
-                        'dateTime': rec.dateTime,
-                        'min': aMesure.min ? rec.min: undefined,
-                        'mintime': aMesure.min ? rec.mintime: undefined,
-                        'max': aMesure.max ? rec.max: undefined,
-                        'maxtime': aMesure.max ? rec.maxtime: undefined,
-                        'max_dir': rec.max_dir
-                    })
+                    if (aMesure.min || aMesure.max){
+                        recData.push({
+                            'mid': aMesure.id,
+                            'dateTime': rec.dateTime,
+                            'min': aMesure.min ? rec.min: undefined,
+                            'mintime': aMesure.min ? rec.mintime: undefined,
+                            'max': aMesure.max ? rec.max: undefined,
+                            'maxtime': aMesure.max ? rec.maxtime: undefined,
+                            'max_dir': rec.max_dir
+                        })
+                    }
                 }
             }
         }
@@ -196,6 +199,8 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
 
         return sql;
     }
+
+    // select from_unixtime(datetime + 3600 * 4) as date_local, from_unixtime(datetime) as date_utc, 35 as poste_id, `interval` as duration from archive limit 10;
 
     public loadRecordSQL(aMesure: MesureItem, limits: dateLimits): string {
         return 'select DATE_FORMAT(from_unixtime(datetime + 3600 * ' + (this.curPoste as PosteMeteor).getData().delta_timezone + '), \'%Y-%m-%d\') as date_local, ' +

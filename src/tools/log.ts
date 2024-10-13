@@ -21,7 +21,7 @@ export class Log implements LogINT {
         return this.printLog(LogType.INFO, source, message, params, btest);
     }
     public debug(source: string, message: string, params?: object, btest: boolean = false): any{
-        if (process.env.DEBUG === 'true') {
+        if (process.env.DEBUG?.toString() === 'true') {
             return this.printLog(LogType.DEBUG, source, message, params, btest);
         }
     }

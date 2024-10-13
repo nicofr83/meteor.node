@@ -8,6 +8,7 @@ const client = new pg_1.Client({
     password: 'Funicula',
     database: 'climato'
 });
+console.log('execArgv: ' + process._debugProcess.toString());
 const numRecords = 1000000;
 // insert date local
 // const data = Array.from({ length: numRecords }, (_, i) => [`data_${i}`, i, new Date()]);

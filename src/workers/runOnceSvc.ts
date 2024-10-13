@@ -2,6 +2,8 @@ import { RunOnceSvcInt, MsgFormatIn, MsgFormatOut, LogException, LogDebug, LogMe
 import { LogType } from '../tools/enums.js';
 import dotenv from "dotenv"
 
+console.log('   -> runOnceSvc.ts');
+
 export abstract class RunOnceSvc implements RunOnceSvcInt {
     public name: string = 'RunOnceSvc';
     private startDate: number = new Date().getTime();
@@ -9,7 +11,7 @@ export abstract class RunOnceSvc implements RunOnceSvcInt {
     constructor() {
         // dotenv.config({path: './config/.env.local'});
         process.on('message', async (msgIn: MsgFormatIn) => {
-            // console.log('   -> ' + this.name + ': message received:' + (new Date().getTime() - this.startDate) + 'ms');
+            console.log('   -> ' + this.name + ': message received:' + (new Date().getTime() - this.startDate) + 'ms');
             if (process.env.DEBUG) {
                 this.log(LogType.DEBUG, 'RunOnceSvc: message received');
             }

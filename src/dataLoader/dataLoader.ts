@@ -1,6 +1,9 @@
 import { DumpArchive, DumpRecords, DumpArray, DataLoader_INT } from './dataLoader_interface.js';
+import { MesureItem} from '../metier/mesure_meteor_interface.js';
 
 export abstract class DataLoader implements DataLoader_INT {
+    protected mAll: MesureItem[] = [];
+
     constructor() {
 
     }
@@ -8,17 +11,44 @@ export abstract class DataLoader implements DataLoader_INT {
     public async flushObs(client: any, data: DumpArchive[]): Promise<void> {
         const chunkSize = 1000;
         const startTime = Date.now();
+        var sqlPreInsert = 'INSERT INTO obs (date_local, date_utc, poste_id, duration, '
+        var nbColumns = 0;
+
+        for (const aCol of this.mAll) {
+            if (aCol.archive_col != undefined) {
+                sqlPreInsert += aCol.json_input + ', ';
+                nbColumns++;
+            }
+        }
+        sqlPreInsert = sqlPreInsert.slice(0, -2) + ') VALUES ';
 
         for (let i = 0; i < data.length; i += chunkSize) {
+            const chunkValue = [] as any[];
             const chunk = data.slice(i, i + chunkSize);
-            const placeholders = chunk.map((_: any, idx: number) => `($${idx * 3 + 1}, $${idx * 3 + 2}, $${idx * 3 + 3})`).join(',');
+            for (const anArchiveRow of chunk) {
+                var aRow = [] as any[];
+                aRow.push(anArchiveRow.date_local);
+                aRow.push(anArchiveRow.date_utc);
+                aRow.push(anArchiveRow.poste_id);
+                aRow.push(anArchiveRow.duration);
+                for (const aCol of this.mAll) {
+                    if (aCol.archive_col != undefined) {
+                        aRow.push(anArchiveRow[aCol.json_input as string]);
+                    }
+                }
+                chunkValue.push(aRow);
+            }
+            // const placeholders = chunk.map((_: any, idx: number) => `($${idx * 3 + 1}, $${idx * 3 + 2}, $${idx * 3 + 3})`).join(',');
+
+            var placeholders = chunk.map((_: any, idx: number) => {
+                const baseIdx = idx * (nbColumns + 4) + 1;
+                const cols = Array.from({ length: nbColumns + 4 }, (_, colIdx) => `$${baseIdx + colIdx}`).join(', ');
+                return `(${cols})`;
+            }).join(',');
             const values = chunk.flat();
 
-            const insertQuery = `
-                INSERT INTO test_table (data, nombre, time_added) VALUES ${placeholders}
-            `;
-
-            await client.query(insertQuery, values);
+            const insertQuery = sqlPreInsert + `${placeholders}`;
+            await client.query(sqlPreInsert, values);
         }
 
         const duration = (Date.now() - startTime) / 1000;

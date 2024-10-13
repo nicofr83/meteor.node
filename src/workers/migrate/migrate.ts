@@ -2,12 +2,13 @@ import { RunOnceSvc } from '../runOnceSvc.js';
 import { Container } from 'typedi';
 import { Log } from '../../tools/log.js';
 import { DumpLoader } from "../../dataLoader/dump/dumpLoader.js";
+import { DumpRecords, DumpArray } from '../../dataLoader/dataLoader_interface.js';
 import { PosteMeteor } from "../../metier/poste_meteor.js";
 import { MesureMeteor } from "../../metier/mesure_meteor.js";
-import { DBOptions } from '../../tools/db_interface.js';
 import { MesureItem } from '../../metier/mesure_meteor_interface.js';
-import { DumpRecords, DumpArray } from '../../dataLoader/dataLoader_interface.js';
+import { DBOptions } from '../../tools/db_interface.js';
 import { DB_PG } from "../../tools/db_pg.js";
+console.log('in migrate 2');
 
 class Migrate extends RunOnceSvc {
     private myDump = Container.get(DumpLoader);
@@ -18,13 +19,16 @@ class Migrate extends RunOnceSvc {
     private pgInstance = Container.get(DB_PG);
 
     constructor() {
+        console.log('in migrate constructor')
         super();
         this.myPoste = undefined;
+        console.log('exiting migrate constructor 2')
     }
 
     public async runMe(data: any): Promise<object | undefined> {
         // this.log(LogType.INFO, `in SvcTest : ${JSON.stringify(data)}`);
         return new Promise<object | undefined>(async (f, reject) => {
+            console.log('in migrate')
             const client = await this.pgInstance.connect();
             try {
                 this.myLog.debug('Migrate.runMe', `data: ${JSON.stringify(data)}`);
@@ -49,7 +53,10 @@ class Migrate extends RunOnceSvc {
                 f(undefined);
 
             } catch (error: any) {
-                reject(error);
+                console.log('error:', error)
+                setTimeout(() => {
+                    reject(error);
+                }, 1000);
             }
             finally {
                 await this.pgInstance.disconnect(client);
@@ -102,3 +109,4 @@ class Migrate extends RunOnceSvc {
         return cleanRecords;
     }
 }
+new Migrate();
