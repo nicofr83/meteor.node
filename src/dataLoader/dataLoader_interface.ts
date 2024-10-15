@@ -1,56 +1,59 @@
-export interface DumpArchive {
-    [key: string]: any;
-    date_local: Date;
-    date_utc: Date;
-    poste_id: number;
-    interval: number;
-    barometer: number|undefined;
-    pressure: number|undefined;
-    in_temp: number|undefined;
-    out_temp: number|undefined;
-    dewpoint: number|undefined;
-    etp: number|undefined;
-    heatindex: number|undefined;
-    extra_temp1: number|undefined;
-    extra_temp2: number|undefined;
-    extra_temp3: number|undefined;
-    hail: number|undefined;
-    in_humidity: number|undefined;
-    out_humidity: number|undefined;
-    extra_humid1: number|undefined;
-    extra_humid2: number|undefined;
-    leaf_temp1: number|undefined;
-    leaf_temp2: number|undefined;
-    leaf_wet1: number|undefined;
-    leaf_wet2: number|undefined;
-    radiation: number|undefined;
-    uv: number|undefined;
-    rain: number|undefined;
-    rain_rate: number|undefined;
-    rx: number|undefined;
-    soil_moist1: number|undefined;
-    soil_moist2: number|undefined;
-    soil_moist3: number|undefined;
-    soil_moist4: number|undefined;
-    soil_temp1: number|undefined;
-    soil_temp2: number|undefined;
-    soil_temp3: number|undefined;
-    soil_temp4: number|undefined;
-    voltage: number|undefined;
-    wind: number|undefined;
-    wind_gust: number|undefined;
-    windchill: number|undefined;
-}
-export interface DumpRecords {
-    [key: string]: any;
-    date_local: Date;
-    mid: bigint;
-    min: number|undefined;
-    mintime: Date|undefined;
-    max: number|undefined;
-    maxtime: Date|undefined;
-    max_dir: number|undefined;
-}
+export const DumpArchiveIdx = {
+    "date_local": 0,
+    "date_utc": 1,
+    "poste_id": 2,
+    "interval": 3,
+    "barometer": 4,
+    "pressure": 5,
+    "in_temp": 6,
+    "out_temp": 7,
+    "dewpoint": 8,
+    "etp": 9,
+    "heatindex": 10,
+    "extra_temp1": 11,
+    "extra_temp2": 12,
+    "extra_temp3": 13,
+    "hail": 14,
+    "in_humidity": 15,
+    "out_humidity": 16,
+    "extra_humid1": 17,
+    "extra_humid2": 18,
+    "leaf_temp1": 19,
+    "leaf_temp2": 20,
+    "leaf_wet1": 21,
+    "leaf_wet2": 22,
+    "radiation": 23,
+    "uv": 24,
+    "rain": 25,
+    "rain_rate": 26,
+    "rx": 27,
+    "soil_moist1": 28,
+    "soil_moist2": 29,
+    "soil_moist3": 30,
+    "soil_moist4": 31,
+    "soil_temp1": 32,
+    "soil_temp2": 33,
+    "soil_temp3": 34,
+    "soil_temp4": 35,
+    "voltage": 36,
+    "wind": 37,
+    "wind_gust": 38,
+    "windchill": 39,
+};
+
+export type DumpArchive = Array<any>;
+
+export const DumpRecordsIdx = {
+    "DATE_LOCAL": 0,
+    "MID": 1,
+    "MIN": 2,
+    "MINTIME": 3,
+    "MAX": 4,
+    "MAXTIME": 5,
+    "MAXDIR": 6,
+};
+export type DumpRecords = Array<any>;
+
 export interface DumpArray {
     archive: DumpArchive[];
     records: DumpRecords[];

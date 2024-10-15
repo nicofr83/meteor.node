@@ -16,7 +16,6 @@ export class DB_PG extends DB{
             port: parseInt(process.env.POSTGRES_PORT ? process.env.POSTGRES_PORT : '5432'),
             database: process.env.POSTGRES_DB ? process.env.POSTGRES_DB : 'climato'
         });
-
     }
 
     async connect(dbName: string|undefined = undefined): Promise<pg.PoolClient> {

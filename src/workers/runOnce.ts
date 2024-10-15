@@ -209,6 +209,7 @@ export class RunOnce {
             }
         });
     }
+
     private checkQueue() {
         // Nothing in the waiting list
         if (this.objectsQueue.length == 0 || this.onGoingCheck) {

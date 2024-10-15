@@ -23,7 +23,7 @@ export class DB_MYSQL extends DB{
             if (varIdx != -1) {
                 return await this.pool[varIdx].pool.getConnection();
             }
-            tmpPool = mysql.createPool({
+            tmpPool = await mysql.createPool({
                 host: process.env.MYSQL_HOST ? process.env.MYS_HOST : 'localhost',
                 user: process.env.MYSQL_USER ? process.env.MYS_USER : 'nico',
                 password: process.env.MYSQL_PASSWORD ? process.env.MYS_PASSWORD : 'Funiculi',
@@ -46,9 +46,12 @@ export class DB_MYSQL extends DB{
         return myConn;
     }
 
-    async executeSQL(myConn: mysql.PoolConnection, sql: string, values: any): Promise<any[]>{
+    async executeSQL(myConn: mysql.PoolConnection, sql: string, values: any, rowsAsArray: boolean = false): Promise<any[]>{
         // console.log('mysqk.exec: ' + sql);
-        const [rows, fields]  = await myConn.query(sql, values);
+        const [rows, fields]  = await myConn.query({
+            sql,
+            values,
+            rowsAsArray});
         if (rows == undefined) {
             return [];
         }

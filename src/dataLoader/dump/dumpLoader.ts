@@ -1,14 +1,13 @@
 import 'reflect-metadata';
 import { Service, Container } from 'typedi';
 import { dateLimits, DumpLoader_INT } from './dumpLoader_interface.js'
-import { DBOptions } from '../../tools/db_interface.js';
 import { meteorDate } from '../../tools/meteor_date.js';
 import { Log } from '../../tools/log.js';
 import { DB_MYSQL } from '../../tools/db_mysql.js';
 import { MesureMeteor } from '../../metier/mesure_meteor.js';
 import { MesureItem} from '../../metier/mesure_meteor_interface.js';
 import { DataLoader } from '../dataLoader.js';
-import { DumpArchive, DumpRecords, DumpArray} from '../dataLoader_interface.js';
+import { DumpArchive, DumpRecords, DumpRecordsIdx, DumpArray} from '../dataLoader_interface.js';
 import { PosteMeteor } from '../../metier/poste_meteor.js';
 
 @Service({ transient: true })
@@ -134,7 +133,7 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
 
         try {
             myConn = await this.dbMysql.connect(this.meteor);
-            archData = await this.dbMysql.executeSQL(myConn, sql_archive, []);
+            archData = await this.dbMysql.executeSQL(myConn, sql_archive, [], true);
         }
         finally {
             if (myConn != undefined) {
@@ -146,7 +145,7 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
     }
 
     public async loadRecordsData(mAll: MesureItem[], dateLimits: dateLimits): Promise<any[]> {
-        const recData = [] as any[];
+        var recData = [] as any[];
         var myConn: any = undefined;
         try {
             myConn = await this.dbMysql.connect(this.meteor);
@@ -155,20 +154,11 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
                     continue;
                 }
                 const sql_minmax = this.loadRecordSQL(aMesure, dateLimits);
-                const recMinMax = await this.dbMysql.executeSQL(myConn, sql_minmax, []);
-                for (const rec of recMinMax) {
-                    if (aMesure.min || aMesure.max){
-                        recData.push({
-                            'mid': aMesure.id,
-                            'dateTime': rec.dateTime,
-                            'min': aMesure.min ? rec.min: undefined,
-                            'mintime': aMesure.min ? rec.mintime: undefined,
-                            'max': aMesure.max ? rec.max: undefined,
-                            'maxtime': aMesure.max ? rec.maxtime: undefined,
-                            'max_dir': rec.max_dir
-                        })
-                    }
-                }
+                const recMinMax = await this.dbMysql.executeSQL(myConn, sql_minmax, [], true);
+
+                var recDataTmp = [...recData, ...recMinMax];
+                recData = recDataTmp;
+                recDataTmp = [];
             }
         }
         catch (error) {
@@ -210,7 +200,7 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
             (aMesure.max ? 'max, ' : 'null, ') +
             (aMesure.max ? 'maxtime, ' : 'null, ') +
             (aMesure.is_wind == false ? 'null': 'max_dir') + ' as max_dir '+
-            'from archive_day_' + aMesure.archive_table + ' ' +
+            'from archive_day_' + aMesure.archive_col + ' ' +
             'where dateTime > ' + limits.min + ' and dateTime <= ' + limits.max + ' '+
             'order by date_local';
     }

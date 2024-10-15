@@ -1,4 +1,4 @@
-import { DumpArchive, DumpRecords, DumpArray, DataLoader_INT } from './dataLoader_interface.js';
+import { DumpArchive, DumpRecords, DumpArchiveIdx, DumpArray, DataLoader_INT } from './dataLoader_interface.js';
 import { MesureItem} from '../metier/mesure_meteor_interface.js';
 
 export abstract class DataLoader implements DataLoader_INT {
@@ -8,7 +8,7 @@ export abstract class DataLoader implements DataLoader_INT {
 
     }
 
-    public async flushObs(client: any, data: DumpArchive[]): Promise<void> {
+    public async flushObs(client: any, dumpData: DumpArchive[]): Promise<void> {
         const chunkSize = 1000;
         const startTime = Date.now();
         var sqlPreInsert = 'INSERT INTO obs (date_local, date_utc, poste_id, duration, '
@@ -22,18 +22,19 @@ export abstract class DataLoader implements DataLoader_INT {
         }
         sqlPreInsert = sqlPreInsert.slice(0, -2) + ') VALUES ';
 
-        for (let i = 0; i < data.length; i += chunkSize) {
+        for (let i = 0; i < dumpData.length; i += chunkSize) {
             const chunkValue = [] as any[];
-            const chunk = data.slice(i, i + chunkSize);
+            const chunk = dumpData.slice(i, i + chunkSize);
             for (const anArchiveRow of chunk) {
                 var aRow = [] as any[];
-                aRow.push(anArchiveRow.date_local);
-                aRow.push(anArchiveRow.date_utc);
-                aRow.push(anArchiveRow.poste_id);
-                aRow.push(anArchiveRow.duration);
+                aRow.push(anArchiveRow[DumpArchiveIdx.date_local]);
+                aRow.push(anArchiveRow[DumpArchiveIdx.date_utc]);
+                aRow.push(anArchiveRow[DumpArchiveIdx.poste_id]);
+                aRow.push(anArchiveRow[DumpArchiveIdx.interval]);
                 for (const aCol of this.mAll) {
                     if (aCol.archive_col != undefined) {
-                        aRow.push(anArchiveRow[aCol.json_input as string]);
+                        var mesure_key = aCol.json_input as keyof typeof anArchiveRow;
+                        aRow.push(anArchiveRow[mesure_key]);
                     }
                 }
                 chunkValue.push(aRow);
@@ -45,10 +46,15 @@ export abstract class DataLoader implements DataLoader_INT {
                 const cols = Array.from({ length: nbColumns + 4 }, (_, colIdx) => `$${baseIdx + colIdx}`).join(', ');
                 return `(${cols})`;
             }).join(',');
-            const values = chunk.flat();
+            const values = chunkValue.flat();
 
             const insertQuery = sqlPreInsert + `${placeholders}`;
-            await client.query(sqlPreInsert, values);
+            try {
+                const retIns = await client.query(insertQuery, values);
+                console.dir(retIns);
+            } catch(error: any) {
+                throw error;
+            }
         }
 
         const duration = (Date.now() - startTime) / 1000;
