@@ -4,10 +4,6 @@ import { MesureItem} from '../metier/mesure_meteor_interface.js';
 export abstract class DataLoader implements DataLoader_INT {
     protected mAll: MesureItem[] = [];
 
-    constructor() {
-
-    }
-
     public async flushObs(client: any, dumpData: DumpArchive[]): Promise<void> {
         const chunkSize = 1000;
         const startTime = Date.now();
@@ -33,8 +29,8 @@ export abstract class DataLoader implements DataLoader_INT {
                 aRow.push(anArchiveRow[DumpArchiveIdx.interval]);
                 for (const aCol of this.mAll) {
                     if (aCol.archive_col != undefined) {
-                        var mesure_key = aCol.json_input as keyof typeof anArchiveRow;
-                        aRow.push(anArchiveRow[mesure_key]);
+                        var mesure_key = aCol.json_input as keyof typeof DumpArchiveIdx;
+                        aRow.push(anArchiveRow[DumpArchiveIdx[mesure_key]]);
                     }
                 }
                 chunkValue.push(aRow);
@@ -62,5 +58,35 @@ export abstract class DataLoader implements DataLoader_INT {
     }
 
     public async flushRecords(client: any, data: DumpRecords[]): Promise<void> {
+        const chunkSize = 1000;
+        const startTime = Date.now();
+        var minRecords = data.filter((aRow: any) => aRow[2] != undefined);
+        const valMinRecords= minRecords.map(v => v.filter((_, i) => i < 7));
+        minRecords = [];
+        console.log('valMinRecords:', JSON.stringify(valMinRecords));
+
+        var sqlInsert = 'insert into x_min(date_local, mesure_id, poste_id, obs_id, qa_min, min, min_time) values ';
+        const nbColumns = 7;
+
+        for (let i = 0; i < valMinRecords.length; i += chunkSize) {
+            const chunk = valMinRecords.slice(i, i + chunkSize);
+ 
+            // const placeholders = chunk.map((_, index) => `($${index * 7 + 1}, $${index * 7 + 2}, $${index * 7 + 3}, $${index * 7 + 4}, $${index * 7 + 5}, $${index * 7 + 6}, $${index * 7 + 7})`).join(',');
+            var placeholders = chunk.map((_: any, idx: number) => {
+                const baseIdx = idx * (nbColumns) + 1;
+                const cols = Array.from({ length: nbColumns }, (_, colIdx) => `$${baseIdx + colIdx}`).join(', ');
+                return `(${cols})`;
+            }).join(',');
+
+            const values = chunk.flat();
+
+            const insertQuery = sqlInsert + `${placeholders}`;
+            try {
+                const retIns = await client.query(insertQuery, values);
+                console.dir(retIns);
+            } catch(error: any) {
+                throw error;
+            }
+        }
     }
 }

@@ -7,7 +7,7 @@ import { DB_MYSQL } from '../../tools/db_mysql.js';
 import { MesureMeteor } from '../../metier/mesure_meteor.js';
 import { MesureItem} from '../../metier/mesure_meteor_interface.js';
 import { DataLoader } from '../dataLoader.js';
-import { DumpArchive, DumpRecords, DumpRecordsIdx, DumpArray} from '../dataLoader_interface.js';
+import { DumpArchive, DumpArray} from '../dataLoader_interface.js';
 import { PosteMeteor } from '../../metier/poste_meteor.js';
 
 @Service({ transient: true })
@@ -61,10 +61,10 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
                 'true as first_pass, ' +
                 'false as stop, ' +
 
-                'min(datetime) as min, ' +
-                'min(datetime) as arch_min, ' +
-                'min(from_unixtime(datetime)) as min_dt, ' +
-                'min(from_unixtime(datetime)) as arch_min_dt, ' +
+                'min(datetime) -1 as min, ' +
+                'min(datetime) -1 as arch_min, ' +
+                'min(from_unixtime(datetime - 1)) as min_dt, ' +
+                'min(from_unixtime(datetime - 1)) as arch_min_dt, ' +
 
                 'max(datetime) as max, ' +
                 'max(datetime) as arch_max, ' +
@@ -194,7 +194,10 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
 
     public loadRecordSQL(aMesure: MesureItem, limits: dateLimits): string {
         return 'select DATE_FORMAT(from_unixtime(datetime + 3600 * ' + (this.curPoste as PosteMeteor).getData().delta_timezone + '), \'%Y-%m-%d\') as date_local, ' +
-        aMesure.id + ' as mid, ' +
+            aMesure.id + ' as mid, ' +
+            this.curPoste?.getData().id + ' as pid, ' +
+            'null as value, ' +
+            '0, ' +  // QA.UNSET
             (aMesure.min ? 'min, ' : 'null, ') +
             (aMesure.min ? 'mintime, ' : 'null, ') +
             (aMesure.max ? 'max, ' : 'null, ') +

@@ -23,7 +23,7 @@ export class DB_MYSQL extends DB{
             if (varIdx != -1) {
                 return await this.pool[varIdx].pool.getConnection();
             }
-            tmpPool = await mysql.createPool({
+            tmpPool = mysql.createPool({
                 host: process.env.MYSQL_HOST ? process.env.MYS_HOST : 'localhost',
                 user: process.env.MYSQL_USER ? process.env.MYS_USER : 'nico',
                 password: process.env.MYSQL_PASSWORD ? process.env.MYS_PASSWORD : 'Funiculi',

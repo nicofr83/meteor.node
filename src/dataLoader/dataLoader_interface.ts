@@ -44,14 +44,18 @@ export const DumpArchiveIdx = {
 export type DumpArchive = Array<any>;
 
 export const DumpRecordsIdx = {
-    "DATE_LOCAL": 0,
-    "MID": 1,
-    "MIN": 2,
-    "MINTIME": 3,
-    "MAX": 4,
-    "MAXTIME": 5,
-    "MAXDIR": 6,
+    "DATE_LOCAL": 0,    // Keep a zero value here
+    "MID": 1,           // Keep a one value here
+    "POSTE_ID": 2,
+    "OBS_ID": 3,    
+    "QA": 4,
+    "MIN": 5,
+    "MINTIME": 6,
+    "MAX": 7,
+    "MAXTIME": 8,
+    "MAXDIR": 9,
 };
+
 export type DumpRecords = Array<any>;
 
 export interface DumpArray {
