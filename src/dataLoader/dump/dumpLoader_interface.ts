@@ -30,4 +30,5 @@ export interface DumpLoader_INT extends DataLoader_INT{
     loadRecordsData(mAll: MesureItem[], limits: dateLimits): Promise<any[]>;
     loadArchiveSQL(mAll: MesureItem[], limits: dateLimits): string;
     loadRecordSQL(aMesure: MesureItem, limits: dateLimits): string;
+    addMesureValueToRecords(dumpData: DumpArray) : void;
 } 

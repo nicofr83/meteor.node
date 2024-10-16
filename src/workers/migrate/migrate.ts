@@ -42,9 +42,9 @@ class Migrate extends RunOnceSvc {
                     await this.pgInstance.beginTransaction(client);
 
                     var dumpData = await this.myDump.getFromDump(dateLimits);
-                    this.addMesureValueToRecords(dumpData);
 
                     await this.myDump.flushObs(client, dumpData.archive);
+                    this.myDump.addMesureValueToRecords(dumpData);
                     await this.myDump.flushRecords(client, this.cleanUpRecords(dumpData));
 
                     await this.pgInstance.commitTransaction(client);
@@ -65,50 +65,13 @@ class Migrate extends RunOnceSvc {
         });
     }
   
-    private addMesureValueToRecords(dumpData: DumpArray) {
-        const date_local_key: keyof typeof dumpData.archive = DumpArchiveIdx.date_local;
-        
-        for (const anArchiveData of dumpData.archive) {
-            for (const aMesure of this.mAll) {
-                if (aMesure.id == BigInt(13)) {
-                    console.log('dewpoint');
-                }
-                if (aMesure.min == true || aMesure.max == true) {
-                    var json_input_key: keyof typeof DumpArchiveIdx = aMesure.json_input as any;
-                    const obs_date = new Date(anArchiveData[date_local_key].setHours(0,0,0,0));
-                    const obs_value = anArchiveData[DumpArchiveIdx[json_input_key]];
-                    if (obs_value != undefined) {
-                        dumpData.records.push([
-                            anArchiveData[date_local_key].toISOString().slice(0, 10),
-                            Number(aMesure.id),
-                            this.myPoste?.getData().id,
-                            undefined,
-                            0,
-                            aMesure.min == true ? obs_value : undefined,
-                            aMesure.min == true ? obs_date : undefined,
-                            aMesure.max == true ? obs_value : undefined,
-                            aMesure.max == true ? obs_date : undefined,
-                            undefined,
-                            // (113, 'gust dir',        'wind_gust_dir',   'windGustDir',      'skip',       null,     false,   false,    0,      false,    true,  'wind_max_dir',        '{}'),
-                            // (114, 'gust',            'wind_gust',       'windGust',         'wind',       113,      false,   true,     3,       true,    true,      'wind_max',
-                        ]);
-                    }
-                }
-            }
-        }
-    }
     private cleanUpRecords(dumpData: DumpArray): DumpRecords[] {
         const cleanRecords = [] as DumpRecords[];
         // ****************************************************************
         // Constants of DumpRecordsIdx are not used for performance reasons
         // ****************************************************************
-        const tmpRecordsData = dumpData.records.sort((a, b) => {
-            if (a[0] == b[0]) {
-                const delta_mid = (a[1] - b[1]) as unknown as number;
-                return delta_mid;
-            }
-            return a[0] > b[0] as any;
-        });
+        const tmpRecordsData = this.sortArray(dumpData.records);
+
         var aDate: string = "1950/01/01";
         var aMid: bigint = BigInt(-1);
         var count: number = 0;
@@ -123,12 +86,16 @@ class Migrate extends RunOnceSvc {
                 cleanRecords.push(aRecord);
             }
         }
-        return cleanRecords.sort((a, b) => {
+        return cleanRecords;
+    }
+    private sortArray(recordsArray: DumpRecords[]): DumpRecords[] {
+        return recordsArray.sort((a, b) => {
             if (a[0] == b[0]) {
-                const delta_mid = Number(a[1] - b[1]);
-                return delta_mid;
+                const testMid = a[1] > b[1] ? 1: (a[1] < b[1]) ? -1 : 0;
+                return testMid;    
             }
-            return a[0] > b[0] as any;
+            const testDate = a[0] > b[0] ? 1: -1;
+            return testDate;
         });
     }
 }

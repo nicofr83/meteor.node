@@ -7,7 +7,7 @@ import { DB_MYSQL } from '../../tools/db_mysql.js';
 import { MesureMeteor } from '../../metier/mesure_meteor.js';
 import { MesureItem} from '../../metier/mesure_meteor_interface.js';
 import { DataLoader } from '../dataLoader.js';
-import { DumpArchive, DumpArray} from '../dataLoader_interface.js';
+import { DumpArchive, DumpArchiveIdx, DumpArray} from '../dataLoader_interface.js';
 import { PosteMeteor } from '../../metier/poste_meteor.js';
 
 @Service({ transient: true })
@@ -90,7 +90,6 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
 
         ret.archive = await this.loadArchiveData(this.mAll, limits);
         ret.records = await this.loadRecordsData(this.mAll, limits);
-
         return ret;
     }
 
@@ -173,18 +172,53 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
         }
     }
 
+    public addMesureValueToRecords(dumpData: DumpArray): void {
+        const date_local_key: keyof typeof dumpData.archive = DumpArchiveIdx.date_local;
+        
+        for (const anArchiveData of dumpData.archive) {
+            const obs_id =  anArchiveData[DumpArchiveIdx.obs_id];
+            for (const aMesure of this.mAll) {
+                if (aMesure.id == BigInt(13)) {
+                    console.log('dewpoint');
+                }
+                if (aMesure.min == true || aMesure.max == true) {
+                    var json_input_key: keyof typeof DumpArchiveIdx = aMesure.json_input as any;
+                    const obs_date = new Date(anArchiveData[date_local_key]);
+                    const obs_value = anArchiveData[DumpArchiveIdx[json_input_key]];
+                    if (obs_value != undefined) {
+                        dumpData.records.push([
+                            new Date(obs_date.setHours(0,0,0,0)),
+                            Number(aMesure.id),
+                            this.curPoste?.getData().id,
+                            obs_id,
+                            0,
+                            aMesure.min == true ? obs_value : undefined,
+                            aMesure.min == true ? obs_date : undefined,
+                            aMesure.max == true ? obs_value : undefined,
+                            aMesure.max == true ? obs_date : undefined,
+                            undefined,
+                            // (113, 'gust dir',        'wind_gust_dir',   'windGustDir',      'skip',       null,     false,   false,    0,      false,    true,  'wind_max_dir',        '{}'),
+                            // (114, 'gust',            'wind_gust',       'windGust',         'wind',       113,      false,   true,     3,       true,    true,      'wind_max',
+                        ]);
+                    }
+                }
+            }
+        }
+    }
     public loadArchiveSQL(mAll: MesureItem[], limits: dateLimits): string {
+        // we add a column with null value to store obs_id to be used in x_min/x_max tables to link to obs table
         var sql = 'select' +
             ' from_unixtime(datetime + 3600 * ' + (this.curPoste as PosteMeteor).getData().delta_timezone + ') as date_local,' +
             ' from_unixtime(datetime) as date_utc,'+
             ' ' + this.curPoste?.getData().id + ' as poste_id,' +
             ' `interval` as duration, ';
         for (const mItem of mAll) {
+            // console.log(mItem.name);
             if (mItem.archive_col != undefined) {
                 sql += `${mItem.archive_col} as ${mItem.json_input}, `;
             }
         }
-        sql = sql.slice(0, -2) + ` from archive `;
+        sql += `null from archive `;
         sql += `where datetime > ${limits.min} and datetime <= ${limits.max} order by datetime`;
 
         return sql;
@@ -199,9 +233,9 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
             'null as value, ' +
             '0, ' +  // QA.UNSET
             (aMesure.min ? 'min, ' : 'null, ') +
-            (aMesure.min ? 'mintime, ' : 'null, ') +
+            (aMesure.min ? 'from_unixtime(mintime + 3600 * ' + (this.curPoste as PosteMeteor).getData().delta_timezone + '), ' : 'null, ') +
             (aMesure.max ? 'max, ' : 'null, ') +
-            (aMesure.max ? 'maxtime, ' : 'null, ') +
+            (aMesure.max ? 'from_unixtime(maxtime + 3600 * ' + (this.curPoste as PosteMeteor).getData().delta_timezone + '), ' : 'null, ') +
             (aMesure.is_wind == false ? 'null': 'max_dir') + ' as max_dir '+
             'from archive_day_' + aMesure.archive_col + ' ' +
             'where dateTime > ' + limits.min + ' and dateTime <= ' + limits.max + ' '+

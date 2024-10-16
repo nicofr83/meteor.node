@@ -1,4 +1,4 @@
-import { DumpArchive, DumpRecords, DumpArchiveIdx, DumpArray, DataLoader_INT } from './dataLoader_interface.js';
+import { DumpArchive, DumpRecords, DumpArchiveIdx, DumpRecordsIdx, DataLoader_INT } from './dataLoader_interface.js';
 import { MesureItem} from '../metier/mesure_meteor_interface.js';
 
 export abstract class DataLoader implements DataLoader_INT {
@@ -20,7 +20,8 @@ export abstract class DataLoader implements DataLoader_INT {
 
         for (let i = 0; i < dumpData.length; i += chunkSize) {
             const chunkValue = [] as any[];
-            const chunk = dumpData.slice(i, i + chunkSize);
+            // we remove the obs_is column for our insert
+            const chunk = dumpData.slice(i, i + chunkSize).map(v => v.filter((_, i) => i < 40));
             for (const anArchiveRow of chunk) {
                 var aRow = [] as any[];
                 aRow.push(anArchiveRow[DumpArchiveIdx.date_local]);
@@ -44,10 +45,14 @@ export abstract class DataLoader implements DataLoader_INT {
             }).join(',');
             const values = chunkValue.flat();
 
-            const insertQuery = sqlPreInsert + `${placeholders}`;
+            const insertQuery = sqlPreInsert + `${placeholders}` + ' returning id';
             try {
                 const retIns = await client.query(insertQuery, values);
-                console.dir(retIns);
+                // Load obs_id in our array
+                for (let j = 0; j < retIns.rows.length; j++) {
+                    dumpData[i + j][DumpArchiveIdx.obs_id] = Number(retIns.rows[j].id);
+                }
+                console.log('chunk:', i);
             } catch(error: any) {
                 throw error;
             }
@@ -60,17 +65,55 @@ export abstract class DataLoader implements DataLoader_INT {
     public async flushRecords(client: any, data: DumpRecords[]): Promise<void> {
         const chunkSize = 1000;
         const startTime = Date.now();
-        var minRecords = data.filter((aRow: any) => aRow[2] != undefined);
-        const valMinRecords= minRecords.map(v => v.filter((_, i) => i < 7));
-        minRecords = [];
-        console.log('valMinRecords:', JSON.stringify(valMinRecords));
 
+        // ------------
+        // Load x_min
+        // ------------
         var sqlInsert = 'insert into x_min(date_local, mesure_id, poste_id, obs_id, qa_min, min, min_time) values ';
-        const nbColumns = 7;
+        var nbColumns = 7;
+        var values = [] as any[];
+        var minRecords = data.filter((aRow: any) => (aRow[DumpRecordsIdx.MIN] != undefined && aRow[DumpRecordsIdx.MIN] != null));
+        var valMinRecords= minRecords.map(v => v.filter((_, i) => i < 7));
+        minRecords = [];
 
         for (let i = 0; i < valMinRecords.length; i += chunkSize) {
-            const chunk = valMinRecords.slice(i, i + chunkSize);
+            var chunk = valMinRecords.slice(i, i + chunkSize);
+            valMinRecords = [];
  
+            var placeholders = chunk.map((_: any, idx: number) => {
+                const baseIdx = idx * (nbColumns) + 1;
+                const cols = Array.from({ length: nbColumns }, (_, colIdx) => `$${baseIdx + colIdx}`).join(', ');
+                return `(${cols})`;
+            }).join(',');
+
+            values = chunk.flat();
+            chunk = [];
+
+            const insertQuery = sqlInsert + `${placeholders}`;
+            try {
+                await client.query(insertQuery, values);
+                values = [];
+            } catch(error: any) {
+                throw error;
+            }
+        }
+
+        // ------------
+        // Load x_max
+        // ------------
+        var maxRecords = data.filter((aRow: any) => (aRow[DumpRecordsIdx.MAX] != undefined && aRow[DumpRecordsIdx.MAX] != null));
+
+        const removeIndexes = [5, 6]
+        var valMaxRecords= maxRecords.map(v => v.filter((_, i) => !removeIndexes.includes(i)));
+
+        maxRecords = [];
+    
+        var sqlInsert = 'insert into x_max(date_local, mesure_id, poste_id, obs_id, qa_max, max, max_time, max_dir) values ';
+        nbColumns = 8;
+
+        for (var i = 0; i < valMaxRecords.length; i += chunkSize) {
+            const chunk = valMaxRecords.slice(i, i + chunkSize);
+    
             // const placeholders = chunk.map((_, index) => `($${index * 7 + 1}, $${index * 7 + 2}, $${index * 7 + 3}, $${index * 7 + 4}, $${index * 7 + 5}, $${index * 7 + 6}, $${index * 7 + 7})`).join(',');
             var placeholders = chunk.map((_: any, idx: number) => {
                 const baseIdx = idx * (nbColumns) + 1;
