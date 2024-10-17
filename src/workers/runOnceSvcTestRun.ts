@@ -1,5 +1,4 @@
 import {RunOnce} from "./runOnce.js";
-import {LogData} from "./runOnceSvc_interface.js";
 
 var mt_once: RunOnce;
 try{
@@ -12,12 +11,12 @@ try{
 var ret = undefined as any;
 var cbCount = 1;
 
-function cb(status: boolean, dataCB: any, logMsg: LogData, request: any) {
+function cb(status: boolean, dataCB: any, request: any) {
     console.log('---------------------------------------------------------------------------------');
     if (status) {
         console.log(` -> runOnceSvcTestRun cb ${cbCount} status: ${status} data: ${JSON.stringify(dataCB)}`);
     } else {
-            console.log(` -> ERROR: logMsg: ${logMsg.message}`);
+            console.log(` -> ERROR: data: ${JSON.stringify(dataCB)}`);
     }
     console.log(`    request: ${JSON.stringify(request)}`);
     console.log('---------------------------------------------------------------------------------\n');

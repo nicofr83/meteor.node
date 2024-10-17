@@ -3,6 +3,7 @@ import { ChildProcess, fork } from'child_process';
 import { MsgFormatIn, MsgFormatOut } from './runOnceSvc_interface.js'
 import { WorkerState, LogType } from '../tools/enums.js';
 import { Log } from '../tools/log.js';
+import { Lock } from '../tools/lock.js';
 
 export class RunOnce {
     private state: WorkerState;
@@ -13,20 +14,22 @@ export class RunOnce {
     private callBackInProcess: Function|undefined;
     private taskName: string;
     private myLog: Log;
+    private restartLock: Lock;
     private nbRetries: number = 0;
     private shutdownChild: boolean = false;
     private myTimeOutTimer: NodeJS.Timeout|undefined;   // timeout for a running job
     private restartTimeOut: NodeJS.Timeout|undefined;   // timeout during restart job
-    private killTimeOut: NodeJS.Timeout|undefined;      // timeout during kill job
     private checkQInterval: NodeJS.Timeout|undefined;   // interval to check the queue
     private timeOut: number;
     private filename: string;
     private bStayOnline: boolean;
-    private onGoingCheck: boolean = false;
-    private startDate: number = new Date().getTime();
+    private startJobDate: number = new Date().getTime();
 
     constructor(filename: string, taskName: string, stayOnline: boolean = true, timeOut: number = 5000){
         this.myLog = Container.get(Log);
+        this.restartLock = Container.get(Lock);
+        this.restartLock.setGoal('restartLock');
+        this.restartLock.release();
         this.taskName = taskName;
         this.myLog.debug('runOnce', this.taskName + ' ' + 'runOnce constructor');
         this.myLog.debug('runOnce',`${filename} ${taskName} ${stayOnline} ${timeOut}`);
@@ -35,7 +38,6 @@ export class RunOnce {
         this.timeOut = timeOut;
         this.objectsQueue = new (Array <{'data': any, 'callback': Function|undefined}>);
         this.bStayOnline = stayOnline;
-        this.killTimeOut = undefined;
 
         this.startChild();
         this.setCheckQueueInterval();
@@ -45,7 +47,6 @@ export class RunOnce {
         // Check if the queue is empty
         if (this.checkQInterval == undefined) {
             this.checkQInterval = setInterval(() => {
-                this.myLog.debug('runOnce', this.taskName + ' ' + 'checkQ timeout fired');
                 this.checkQueue();
             }, 150);
             this.myLog.debug('runOnce', this.taskName + ' ' + 'checkQ timeout activated');
@@ -59,9 +60,9 @@ export class RunOnce {
             this.myLog.debug('runOnce', this.taskName + ' ' + 'checkQ timeout de-activated');
         }
     }
-    private stopChild(): void {
+    private async stopChild(): Promise<void> {
         try {
-            this.myLog.debug('runOnce', this.taskName + ' ' + 'begin stopChild: ' + (new Date().getTime() - this.startDate) + 'ms');
+            this.myLog.debug('runOnce', this.taskName + ' ' + 'begin stopChild: ' + (new Date().getTime() - this.startJobDate) + 'ms');
             if (this.shutdownChild) {
                 return;
             }
@@ -73,47 +74,39 @@ export class RunOnce {
                 'data': undefined
             };
             this.worker.send(shutdownRequest);
-            this.restartTimeOut = setTimeout(() => {
-                this.myLog.debug('runOnce', this.taskName + ' ' + 'restart timeout fired');
-                if (this.state == WorkerState.STOPPED) {
-                    this.startChild();
-                    return;
-                }
+            this.state = WorkerState.STOPPING;
+            const restartLockResult = await this.restartLock.acquire('stopChild', 5000);
+            if (!restartLockResult) {
+                this.myLog.info('runOnce', 'child job does not terminate in time, killing it');
                 this.worker.kill();
-                // this.killTimeOut = setTimeout(() => {
-                    console.log(this.taskName + ' ' + 'kill timeout fired');
-                //     this.startChild();
-                // }, 400);
-            }, 200);
+            } else {
+                this.myLog.debug('runOnce', 'child job stopped successfully');
+            }
+            this.state = WorkerState.STOPPED;
+            this.restartLock.release();
         }
         catch (error: any) {
             this.myLog.exception('runOnce', error);
-            // try {
-            //     this.worker.kill();
-            // } catch(error: any) {
-            //     this.myLog.exception('runOnce', error);
-            //     process.exit(1);
-            // }
+            try {
+                this.worker.kill();
+            } catch(error: any) {
+                this.myLog.exception('runOnce', error);
+            }
+            process.exit(1);
         }
     }
 
     private startChild(): void{
         try {
-            this.myLog.debug('runOnce', 'startChild: ' + __dirname + "/" + this.filename);
-            this.startDate = new Date().getTime();
-            if (this.restartTimeOut != undefined) {
-                clearTimeout(this.restartTimeOut);
-            }
-            if (this.killTimeOut != undefined) {
-                clearTimeout(this.killTimeOut);
-            }
-            if (this.state == WorkerState.RUNNING || this.state == WorkerState.AVAILABLE) {
+            if (this.state != WorkerState.STOPPED) {
+                this.myLog.info('runOnce', 'startChild with state != STOPPED, state = ' + this.state.toString());
                 return;
             }
-            this.myLog.debug('runOnce', 'forking');
-            // this.worker = fork('--debug=5589 ' + this.filename);
+            this.myLog.debug('runOnce', 'startChild: ' + __dirname + "/" + this.filename);
+
+            this.startJobDate = new Date().getTime();
+            this.myLog.debug('runOnce', 'forking' + __dirname + "/" + this.filename);
             this.worker = fork(__dirname + "/" + this.filename);
-  
             this.myLog.debug('runOnce', 'child pid: ' + this.worker.pid);
             this.initializeWorker(this.worker);
         }
@@ -127,82 +120,50 @@ export class RunOnce {
         this.restartTimeOut = undefined;
         this.nbRetries = 0;
         this.shutdownChild = false;
+        this.restartLock.release();
     }
 
     private initializeWorker(myChild: ChildProcess) {
-        myChild.on('message', (dataReturnedMsg: MsgFormatOut) => {
-            this.myLog.debug('runOnce', this.taskName + ' ' + 'begin message received: ' + (new Date().getTime() - this.startDate) + 'ms');
+        myChild.on('message',async (dataReturnedMsg: MsgFormatOut) => {
+            this.myLog.debug(
+                'runOnce', this.taskName + ' ' +
+                'status: ' + dataReturnedMsg.status.toString() +
+                ', message received: ' + JSON.stringify(dataReturnedMsg.data) +
+                ', time: ' + (new Date().getTime() - this.startJobDate) + 'ms'
+            );
             if (this.myTimeOutTimer != undefined) {
                 clearTimeout(this.myTimeOutTimer);
                 this.myTimeOutTimer = undefined;
             }
-            // free resources
-            const originalRequest = this.dataInProcess;
-            const finalCallback = this.callBackInProcess;
-            this.callBackInProcess = undefined;
-            this.dataInProcess = undefined;
-            this.nbRetries = 0;
-            this.state = WorkerState.AVAILABLE;
-            this.myLog.debug('runOnce', `message received: ${JSON.stringify(dataReturnedMsg.data)}`);
-
-            if (finalCallback != undefined) {
+            // callback
+            if (this.callBackInProcess != undefined) {
                  try {
-                    this.myLog.debug('runOnce', this.taskName + ' ' + 'cb called: ' + (new Date().getTime() - this.startDate) + 'ms');
-                    finalCallback(dataReturnedMsg.status, dataReturnedMsg.data, dataReturnedMsg.logMessage, originalRequest);
+                    this.myLog.debug('runOnce', this.taskName + ' ' + 'cb called: ' + (new Date().getTime() - this.startJobDate) + 'ms');
+                    this.callBackInProcess(dataReturnedMsg.status, dataReturnedMsg.data, this.dataInProcess);
                 } catch (error: any) {
                     this.myLog.exception('runOnce-callback', error);
                 }
             }
-            if (dataReturnedMsg.logMessage != undefined) {
-                const logData = dataReturnedMsg.logMessage;
-                switch (logData.type) {
-                    case LogType.INFO:
-                        this.myLog.info(`${dataReturnedMsg.source}`, `${logData.message}`);
-                        break;
-                    case LogType.DEBUG:
-                        this.myLog.debug(`${dataReturnedMsg.source}`, `${logData.message}`, logData.params == undefined ? {} : logData.params);
-                        break;
-                    case LogType.ERROR:
-                        this.myLog.printLog(logData.type, dataReturnedMsg.source, logData.message, {'firstStack': logData.stackLine});
-                        this.myLog.debug('runOnce', 'data of failed job: ' + JSON.stringify(this.dataInProcess));
-                        break;
-                    case LogType.EXCEPTION:
-                        this.myLog.printLog(logData.type, dataReturnedMsg.source, logData.message, {'stack': logData.stack});
-                        this.myLog.debug('runOnce', 'data of failed job: ' + JSON.stringify(this.dataInProcess));
-                }
-            }
-            // restart the child if not in stay online mode
-            if (!this.bStayOnline) {
-                this.stopChild();
-            }
-            this.myLog.debug('runOnce', this.taskName + ' ' + 'end message received: ' + (new Date().getTime() - this.startDate) + 'ms');
+            // free resources
+            this.callBackInProcess = undefined;
+            this.dataInProcess = undefined;
+            this.nbRetries = 0;
+            this.state = WorkerState.AVAILABLE;
             this.checkQueue();
         });
 
-        myChild.on('error', (error) => {
-            this.myLog.debug('runOnce', this.taskName + ' ' + 'error: ' + error);
+        myChild.on('error', async (error) => {
             this.myLog.exception('runOnce', error);
-            this.stopCheckQueueInterval();
-            this.stopChild();
+            await this.stopChild();
+            this.startChild();
+            this.checkQueue();
         });
 
         myChild.on('exit', (code) => {
             // can get an exit without an error
             this.stopCheckQueueInterval();
             this.myLog.debug('runOnce', 'exit code: ' + code);
-            if (this.state == WorkerState.AVAILABLE){
-                this.stopChild();
-                return;
-            }
-            if (this.nbRetries++ > 10) {
-                this.myLog.exception('runOnce', new Error('to many reties, exiting '));
-                this.shutdownChild = true;
-                setTimeout(() => {
-                    this.myLog.debug('runOnce', this.taskName + ' ' + 'process exit timeout fired');
-                    process.exit(1);
-                }, 500);
-                return;
-            }
+            this.restartLock.release();
             this.state = WorkerState.STOPPED;
             if (this.bStayOnline){
                 this.startChild();
@@ -211,44 +172,51 @@ export class RunOnce {
     }
 
     private checkQueue() {
-        // Nothing in the waiting list
-        if (this.objectsQueue.length == 0 || this.onGoingCheck) {
-            this.stopCheckQueueInterval();
+        if (this.state != WorkerState.AVAILABLE) {
             return;
         }
-
         try {
-            if (this.state == WorkerState.AVAILABLE) {
-                this.setCheckQueueInterval();
-                this.state = WorkerState.RUNNING;
-                var objToLaunch = this.objectsQueue.shift() as any;
-                this.dataInProcess= objToLaunch.data;
-                this.callBackInProcess = objToLaunch.callback;
-                this.myLog.debug('runOnce', `job starting with ${JSON.stringify(this.dataInProcess)}`);
+            // limit re-entrance and uncessary calls
+            this.stopCheckQueueInterval();
 
-                const jobRequest: MsgFormatIn = {
-                    'shutdown': false,
-                    'data': this.dataInProcess
-                };
-                this.worker.send(jobRequest);
-
-                this.myLog.debug('runOnce', `message sent to job`);
-                this.shutdownChild = false;
-                this.nbRetries = 0;
-                if (this.timeOut > 0) {
-                    this.myTimeOutTimer = setTimeout(() => {
-                        this.myLog.debug('runOnce', this.taskName + ' ' + 'child timeout fired');
-                        this.myLog.error('runOnce', new Error('timeout on child process: ' + this.taskName));
-                        this.stopChild();
-                    }, this.timeOut);
+            // Nothing in the waiting list
+            if (this.objectsQueue.length == 0) {
+                // wait for a new job (add job)
+                if (!this.bStayOnline) {
+                    this.stopChild().then(() => {
+                        process.exit(0);
+                        return;
+                    }).catch((error) => {
+                        this.myLog.exception('runOnce', error);
+                        process.exit(1);
+                        return;
+                    });
                 }
+                this.setCheckQueueInterval();
+                return;
             }
+
+            this.state = WorkerState.RUNNING;
+            var objToLaunch = this.objectsQueue.shift() as any;
+            this.dataInProcess= objToLaunch.data;
+            this.callBackInProcess = objToLaunch.callback;
+            this.myLog.debug('runOnce', `job starting with ${JSON.stringify(this.dataInProcess)}`);
+
+            const jobRequest: MsgFormatIn = {
+                'shutdown': false,
+                'data': objToLaunch.data
+            };
+            this.worker.send(jobRequest);
+            this.myLog.debug('runOnce', `message sent to job`);
         }
         catch (error: any) {
             this.myLog.exception('runOnce', error);
-        }
-        finally {
-            this.onGoingCheck = false
+            this.stopChild().then(() => {
+                process.exit(1);
+            }).catch((error) => {
+                this.myLog.exception('runOnce', error);
+                process.exit(1);
+            });
         }
     }
 
