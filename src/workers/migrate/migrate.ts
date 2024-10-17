@@ -8,27 +8,22 @@ import { MesureMeteor } from "../../metier/mesure_meteor.js";
 import { MesureItem } from '../../metier/mesure_meteor_interface.js';
 import { DBOptions } from '../../tools/db_interface.js';
 import { DB_PG } from "../../tools/db_pg.js";
-console.log('in migrate 2');
 
 class Migrate extends RunOnceSvc {
     private myDump = Container.get(DumpLoader);
     private myPoste : PosteMeteor | undefined;
     private myMesure = Container.get(MesureMeteor);
     private mAll: MesureItem[] = [];
-    private myLog = Container.get(Log);
     private pgInstance = Container.get(DB_PG);
 
     constructor() {
-        console.log('in migrate constructor')
         super();
         this.myPoste = undefined;
-        console.log('exiting migrate constructor 2')
     }
 
     public async runMe(data: any): Promise<object | undefined> {
         // this.log(LogType.INFO, `in SvcTest : ${JSON.stringify(data)}`);
         return new Promise<object | undefined>(async (f, reject) => {
-            console.log('in migrate')
             const client = await this.pgInstance.connect();
             try {
                 this.myLog.debug('Migrate.runMe', `data: ${JSON.stringify(data)}`);
@@ -41,19 +36,25 @@ class Migrate extends RunOnceSvc {
                 while ((dateLimits.min - dateLimits.arch_max) <= 0) {
                     await this.pgInstance.beginTransaction(client);
 
+                    var commitStartTime = Date.now();
                     var dumpData = await this.myDump.getFromDump(dateLimits);
+                    var duration = (Date.now() - commitStartTime) / 1000;
+                    this.myLog.debug('migrate', `getFromDump took: ${duration} seconds`);
 
                     await this.myDump.flushObs(client, dumpData.archive);
                     this.myDump.addMesureValueToRecords(dumpData);
                     await this.myDump.flushRecords(client, this.cleanUpRecords(dumpData));
 
+                    commitStartTime = Date.now();
                     await this.pgInstance.commitTransaction(client);
+                    duration = (Date.now() - commitStartTime) / 1000;
+                    this.myLog.debug('migrate', `Commit took: ${duration} seconds`);
                     dateLimits = this.myDump.getNextSlot(dateLimits);
                 }
                 f(undefined);
 
             } catch (error: any) {
-                console.log('error:', error)
+                this.myLog.exception('migrate', error);
                 setTimeout(() => {
                     reject(error);
                 }, 1000);

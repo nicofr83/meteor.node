@@ -17,7 +17,6 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
     private deltaTimezone: number = 0;
     private last_obs_date_utc: Date | undefined;
     private dbMysql = Container.get(DB_MYSQL);
-    private myLog = Container.get(Log);
     private myMesure = Container.get(MesureMeteor);
     // private mAll: MesureItem[] = [];
 
@@ -178,30 +177,29 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
         for (const anArchiveData of dumpData.archive) {
             const obs_id =  anArchiveData[DumpArchiveIdx.obs_id];
             for (const aMesure of this.mAll) {
-                if (aMesure.id == BigInt(13)) {
-                    console.log('dewpoint');
+                if (aMesure.archive_table == undefined || (aMesure.min == false && aMesure.max == false)) {
+                    continue;
                 }
-                if (aMesure.min == true || aMesure.max == true) {
-                    var json_input_key: keyof typeof DumpArchiveIdx = aMesure.json_input as any;
-                    const obs_date = new Date(anArchiveData[date_local_key]);
-                    const obs_value = anArchiveData[DumpArchiveIdx[json_input_key]];
-                    if (obs_value != undefined) {
-                        dumpData.records.push([
-                            new Date(obs_date.setHours(0,0,0,0)),
-                            Number(aMesure.id),
-                            this.curPoste?.getData().id,
-                            obs_id,
-                            0,
-                            aMesure.min == true ? obs_value : undefined,
-                            aMesure.min == true ? obs_date : undefined,
-                            aMesure.max == true ? obs_value : undefined,
-                            aMesure.max == true ? obs_date : undefined,
-                            undefined,
-                            // (113, 'gust dir',        'wind_gust_dir',   'windGustDir',      'skip',       null,     false,   false,    0,      false,    true,  'wind_max_dir',        '{}'),
-                            // (114, 'gust',            'wind_gust',       'windGust',         'wind',       113,      false,   true,     3,       true,    true,      'wind_max',
-                        ]);
-                    }
+                var json_input_key: keyof typeof DumpArchiveIdx = aMesure.json_input as any;
+                const obs_date = new Date(anArchiveData[date_local_key]);
+                const obs_value = anArchiveData[DumpArchiveIdx[json_input_key]];
+                if ((aMesure.allow_zero == false && obs_value == 0 ) || obs_value == undefined) {
+                    continue;
                 }
+                dumpData.records.push([
+                    new Date(obs_date.setHours(0,0,0,0)),
+                    Number(aMesure.id),
+                    this.curPoste?.getData().id,
+                    obs_id,
+                    0,
+                    aMesure.min == true ? obs_value : undefined,
+                    aMesure.min == true ? obs_date : undefined,
+                    aMesure.max == true ? obs_value : undefined,
+                    aMesure.max == true ? obs_date : undefined,
+                    undefined,
+                    // (113, 'gust dir',        'wind_gust_dir',   'windGustDir',      'skip',       null,     false,   false,    0,      false,    true,  'wind_max_dir',        '{}'),
+                    // (114, 'gust',            'wind_gust',       'windGust',         'wind',       113,      false,   true,     3,       true,    true,      'wind_max',
+                ]);
             }
         }
     }
@@ -227,6 +225,15 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
     // select from_unixtime(datetime + 3600 * 4) as date_local, from_unixtime(datetime) as date_utc, 35 as poste_id, `interval` as duration from archive limit 10;
 
     public loadRecordSQL(aMesure: MesureItem, limits: dateLimits): string {
+        var removeZeroValue = '';
+        if (aMesure.allow_zero == false) {
+            if (aMesure.min) {
+                removeZeroValue = 'and min != 0 ';
+            }
+            if (aMesure.max) {
+                removeZeroValue = 'and max != 0 ';
+            }
+        }
         return 'select DATE_FORMAT(from_unixtime(datetime + 3600 * ' + (this.curPoste as PosteMeteor).getData().delta_timezone + '), \'%Y-%m-%d\') as date_local, ' +
             aMesure.id + ' as mid, ' +
             this.curPoste?.getData().id + ' as pid, ' +
@@ -239,6 +246,7 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
             (aMesure.is_wind == false ? 'null': 'max_dir') + ' as max_dir '+
             'from archive_day_' + aMesure.archive_col + ' ' +
             'where dateTime > ' + limits.min + ' and dateTime <= ' + limits.max + ' '+
+            removeZeroValue + 
             'order by date_local';
     }
 }

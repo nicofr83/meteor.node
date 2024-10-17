@@ -1,8 +1,11 @@
 import { DumpArchive, DumpRecords, DumpArchiveIdx, DumpRecordsIdx, DataLoader_INT } from './dataLoader_interface.js';
 import { MesureItem} from '../metier/mesure_meteor_interface.js';
+import { Log } from '../tools/log.js';
+import {Container} from 'typedi';
 
 export abstract class DataLoader implements DataLoader_INT {
     protected mAll: MesureItem[] = [];
+    protected myLog = Container.get(Log);
 
     public async flushObs(client: any, dumpData: DumpArchive[]): Promise<void> {
         const chunkSize = 1000;
@@ -31,7 +34,13 @@ export abstract class DataLoader implements DataLoader_INT {
                 for (const aCol of this.mAll) {
                     if (aCol.archive_col != undefined) {
                         var mesure_key = aCol.json_input as keyof typeof DumpArchiveIdx;
-                        aRow.push(anArchiveRow[DumpArchiveIdx[mesure_key]]);
+                        const mesureValue = anArchiveRow[DumpArchiveIdx[mesure_key]];
+                        // do not push zero values if not allowed by the mesure
+                        if (aCol.allow_zero == false && mesureValue == 0) {
+                            aRow.push(undefined);
+                        } else {
+                            aRow.push(mesureValue);
+                        }
                     }
                 }
                 chunkValue.push(aRow);
@@ -52,14 +61,14 @@ export abstract class DataLoader implements DataLoader_INT {
                 for (let j = 0; j < retIns.rows.length; j++) {
                     dumpData[i + j][DumpArchiveIdx.obs_id] = Number(retIns.rows[j].id);
                 }
-                console.log('chunk:', i);
+                // console.log('chunk:', i);
             } catch(error: any) {
                 throw error;
             }
         }
 
         const duration = (Date.now() - startTime) / 1000;
-        console.log(`Multi-line INSERT took: ${duration} seconds`);
+        this.myLog.debug('migrate', `Flush Obs took: ${duration} seconds`);
     }
 
     public async flushRecords(client: any, data: DumpRecords[]): Promise<void> {
@@ -126,10 +135,12 @@ export abstract class DataLoader implements DataLoader_INT {
             const insertQuery = sqlInsert + `${placeholders}`;
             try {
                 const retIns = await client.query(insertQuery, values);
-                console.dir(retIns);
+                // console.dir(retIns);
             } catch(error: any) {
                 throw error;
             }
         }
+        const duration = (Date.now() - startTime) / 1000;
+        console.log(`Flush Records took: ${duration} seconds`);
     }
 }

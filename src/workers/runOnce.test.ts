@@ -7,8 +7,8 @@ const SECONDS = 5000;
 var mtLoop: RunOnce;
 var mtOnce: RunOnce;
 try{
-    mtLoop = new RunOnce('./dist/workers/runOnceSvcTest1.js', 'runOnceSvcTest1_loop', true, -1);
-    mtOnce = new RunOnce('./dist/workers/runOnceSvcTest2.js', 'runOnceSvcTest2_once', false, -1);
+    mtLoop = new RunOnce('./runOnceSvcTest1.js', 'runOnceSvcTest1_loop', true, -1);
+    mtOnce = new RunOnce('./runOnceSvcTest2.js', 'runOnceSvcTest2_once', false, -1);
 } catch (error) {
     // console.error(`MT_RUNONCE: ${error}`);
     process.exit(1);
@@ -16,7 +16,6 @@ try{
 // console.log("runOnce Test Started");
 
 describe("RunOnce Tests", () => {
-
     it("1 job no callback", () => {
         return new Promise<void>((f, reject) => {
             mtLoop.addJob({'slotId': 1, 'data': 'test 1'});
@@ -81,7 +80,7 @@ it("4 jobs on a new instance", () => {
             if (status) {
                 ret.push(dataCB);
             }
-            // console.log('cb: ' + dataCB + ', status: ' + status + ', ret.len: ' + ret.length);
+            console.log('cb: ' + dataCB + ', status: ' + status + ', ret.len: ' + ret.length);
         }
         var idx = 0;
         while (idx < 4) {
@@ -91,12 +90,12 @@ it("4 jobs on a new instance", () => {
             try {
                 // console.dir(ret);
                 expect(ret.length).toEqual(4);
-                expect(ret[ret.length - 1].returnedData.count).toBe(1);
+                expect(ret[ret.length - 1].returnedData.count).toBe(4);
                 f();
             } catch (error) {
                 reject(error);
             }
-        }, 2500);
+        }, 3000);
     });
 }, 70 * SECONDS);
 

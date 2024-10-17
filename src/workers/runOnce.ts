@@ -26,9 +26,9 @@ export class RunOnce {
     private startDate: number = new Date().getTime();
 
     constructor(filename: string, taskName: string, stayOnline: boolean = true, timeOut: number = 5000){
-        this.taskName = taskName;
-        console.log(this.taskName + ' ' + 'runOnce constructor');
         this.myLog = Container.get(Log);
+        this.taskName = taskName;
+        this.myLog.debug('runOnce', this.taskName + ' ' + 'runOnce constructor');
         this.myLog.debug('runOnce',`${filename} ${taskName} ${stayOnline} ${timeOut}`);
         this.filename = filename;
         this.state = WorkerState.STOPPED;
@@ -45,10 +45,10 @@ export class RunOnce {
         // Check if the queue is empty
         if (this.checkQInterval == undefined) {
             this.checkQInterval = setInterval(() => {
-                console.log(this.taskName + ' ' + 'checkQ timeout fired');
+                this.myLog.debug('runOnce', this.taskName + ' ' + 'checkQ timeout fired');
                 this.checkQueue();
             }, 150);
-            console.log(this.taskName + ' ' + 'checkQ timeout activated');
+            this.myLog.debug('runOnce', this.taskName + ' ' + 'checkQ timeout activated');
         }
     }
     private stopCheckQueueInterval() {
@@ -56,12 +56,12 @@ export class RunOnce {
         if (this.checkQInterval != undefined) {
             clearInterval(this.checkQInterval);
             this.checkQInterval = undefined;
-            console.log(this.taskName + ' ' + 'checkQ timeout de-activated');
+            this.myLog.debug('runOnce', this.taskName + ' ' + 'checkQ timeout de-activated');
         }
     }
     private stopChild(): void {
         try {
-            console.log(this.taskName + ' ' + 'begin stopChild: ' + (new Date().getTime() - this.startDate) + 'ms');
+            this.myLog.debug('runOnce', this.taskName + ' ' + 'begin stopChild: ' + (new Date().getTime() - this.startDate) + 'ms');
             if (this.shutdownChild) {
                 return;
             }
@@ -74,14 +74,14 @@ export class RunOnce {
             };
             this.worker.send(shutdownRequest);
             this.restartTimeOut = setTimeout(() => {
-                console.log(this.taskName + ' ' + 'restart timeout fired');
+                this.myLog.debug('runOnce', this.taskName + ' ' + 'restart timeout fired');
                 if (this.state == WorkerState.STOPPED) {
                     this.startChild();
                     return;
                 }
                 this.worker.kill();
                 // this.killTimeOut = setTimeout(() => {
-                //     console.log(this.taskName + ' ' + 'kill timeout fired');
+                    console.log(this.taskName + ' ' + 'kill timeout fired');
                 //     this.startChild();
                 // }, 400);
             }, 200);
@@ -99,7 +99,7 @@ export class RunOnce {
 
     private startChild(): void{
         try {
-            console.log('startChild: ' + __dirname + "/" + this.filename);
+            this.myLog.debug('runOnce', 'startChild: ' + __dirname + "/" + this.filename);
             this.startDate = new Date().getTime();
             if (this.restartTimeOut != undefined) {
                 clearTimeout(this.restartTimeOut);
@@ -110,11 +110,11 @@ export class RunOnce {
             if (this.state == WorkerState.RUNNING || this.state == WorkerState.AVAILABLE) {
                 return;
             }
-            console.log('forking');
+            this.myLog.debug('runOnce', 'forking');
             // this.worker = fork('--debug=5589 ' + this.filename);
             this.worker = fork(__dirname + "/" + this.filename);
   
-            console.log('child pid: ' + this.worker.pid);
+            this.myLog.debug('runOnce', 'child pid: ' + this.worker.pid);
             this.initializeWorker(this.worker);
         }
         catch (error: any) {
@@ -131,7 +131,7 @@ export class RunOnce {
 
     private initializeWorker(myChild: ChildProcess) {
         myChild.on('message', (dataReturnedMsg: MsgFormatOut) => {
-            console.log(this.taskName + ' ' + 'begin message received: ' + (new Date().getTime() - this.startDate) + 'ms');
+            this.myLog.debug('runOnce', this.taskName + ' ' + 'begin message received: ' + (new Date().getTime() - this.startDate) + 'ms');
             if (this.myTimeOutTimer != undefined) {
                 clearTimeout(this.myTimeOutTimer);
                 this.myTimeOutTimer = undefined;
@@ -147,7 +147,7 @@ export class RunOnce {
 
             if (finalCallback != undefined) {
                  try {
-                    console.log(this.taskName + ' ' + 'cb called: ' + (new Date().getTime() - this.startDate) + 'ms');
+                    this.myLog.debug('runOnce', this.taskName + ' ' + 'cb called: ' + (new Date().getTime() - this.startDate) + 'ms');
                     finalCallback(dataReturnedMsg.status, dataReturnedMsg.data, dataReturnedMsg.logMessage, originalRequest);
                 } catch (error: any) {
                     this.myLog.exception('runOnce-callback', error);
@@ -175,12 +175,12 @@ export class RunOnce {
             if (!this.bStayOnline) {
                 this.stopChild();
             }
-            console.log(this.taskName + ' ' + 'end message received: ' + (new Date().getTime() - this.startDate) + 'ms');
+            this.myLog.debug('runOnce', this.taskName + ' ' + 'end message received: ' + (new Date().getTime() - this.startDate) + 'ms');
             this.checkQueue();
         });
 
         myChild.on('error', (error) => {
-            console.log(this.taskName + ' ' + 'error: ' + error);
+            this.myLog.debug('runOnce', this.taskName + ' ' + 'error: ' + error);
             this.myLog.exception('runOnce', error);
             this.stopCheckQueueInterval();
             this.stopChild();
@@ -189,7 +189,7 @@ export class RunOnce {
         myChild.on('exit', (code) => {
             // can get an exit without an error
             this.stopCheckQueueInterval();
-            console.log('exit code: ' + code);
+            this.myLog.debug('runOnce', 'exit code: ' + code);
             if (this.state == WorkerState.AVAILABLE){
                 this.stopChild();
                 return;
@@ -198,7 +198,7 @@ export class RunOnce {
                 this.myLog.exception('runOnce', new Error('to many reties, exiting '));
                 this.shutdownChild = true;
                 setTimeout(() => {
-                    console.log(this.taskName + ' ' + 'process exit timeout fired');
+                    this.myLog.debug('runOnce', this.taskName + ' ' + 'process exit timeout fired');
                     process.exit(1);
                 }, 500);
                 return;
@@ -237,7 +237,7 @@ export class RunOnce {
                 this.nbRetries = 0;
                 if (this.timeOut > 0) {
                     this.myTimeOutTimer = setTimeout(() => {
-                        console.log(this.taskName + ' ' + 'child timeout fired');
+                        this.myLog.debug('runOnce', this.taskName + ' ' + 'child timeout fired');
                         this.myLog.error('runOnce', new Error('timeout on child process: ' + this.taskName));
                         this.stopChild();
                     }, this.timeOut);
