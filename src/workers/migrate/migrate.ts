@@ -43,7 +43,7 @@ class Migrate extends RunOnceSvc {
 
                     await this.myDump.flushObs(client, dumpData.archive);
                     this.myDump.addMesureValueToRecords(dumpData);
-                    await this.myDump.flushRecords(client, this.cleanUpRecords(dumpData));
+                    await this.myDump.flushRecords(client, dumpData.records);
 
                     commitStartTime = Date.now();
                     await this.pgInstance.commitTransaction(client);
@@ -63,40 +63,6 @@ class Migrate extends RunOnceSvc {
                 await this.pgInstance.disconnect(client);
 
             }
-        });
-    }
-  
-    private cleanUpRecords(dumpData: DumpArray): DumpRecords[] {
-        const cleanRecords = [] as DumpRecords[];
-        // ****************************************************************
-        // Constants of DumpRecordsIdx are not used for performance reasons
-        // ****************************************************************
-        const tmpRecordsData = this.sortArray(dumpData.records);
-
-        var aDate: string = "1950/01/01";
-        var aMid: bigint = BigInt(-1);
-        var count: number = 0;
-
-        for (const aRecord of tmpRecordsData) {
-            if (aRecord[0] != aDate || aRecord[1] != aMid) {
-                count = 0;
-                aDate = aRecord[0];
-                aMid = aRecord[1];
-            }
-            if (count++ <= 2) {
-                cleanRecords.push(aRecord);
-            }
-        }
-        return cleanRecords;
-    }
-    private sortArray(recordsArray: DumpRecords[]): DumpRecords[] {
-        return recordsArray.sort((a, b) => {
-            if (a[0] == b[0]) {
-                const testMid = a[1] > b[1] ? 1: (a[1] < b[1]) ? -1 : 0;
-                return testMid;    
-            }
-            const testDate = a[0] > b[0] ? 1: -1;
-            return testDate;
         });
     }
 }
