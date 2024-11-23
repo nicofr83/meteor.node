@@ -19,11 +19,6 @@ async function uploadFile(req, res) {
     const jsonDirAutoload = process.env.JSON_AUTOLOAD === undefined ? './data/autoload' : process.env.JSON_AUTOLOAD;
     const jsonDirError = process.env.JSON_AUTOLOAD === undefined ? './data/autoload' : process.env.JSON_AUTOLOAD;
     const tmpDir = process.env.TMP_FILE === undefined ? './tmp' : process.env.TMP_FILE;
-    // Ensure the directory exists
-    const dirName = path_1.default.join(jsonDirAutoload, meteor);
-    if (!fs_1.default.existsSync(dirName)) {
-        fs_1.default.mkdirSync(dirName, { recursive: true });
-    }
     const tempFilePath = tmpDir + '/' + req.file?.originalname;
     // Validate parameters
     if (!meteor || !fileName) {
@@ -35,6 +30,11 @@ async function uploadFile(req, res) {
         myLog.info("upload_file", "Invalid meteor: " + meteor);
         removeFile(myLog, tempFilePath, 'delete');
         return res.status(400).json({ error: 'Invalid meteor' });
+    }
+    // Ensure the directory exists
+    const dirName = path_1.default.join(jsonDirAutoload, meteor);
+    if (!fs_1.default.existsSync(dirName)) {
+        fs_1.default.mkdirSync(dirName, { recursive: true });
     }
     const fullFilePath = path_1.default.join(dirName, fileName);
     try {
