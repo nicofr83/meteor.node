@@ -14,6 +14,7 @@ export async function uploadFile(req: Request, res: Response): Promise<Response>
   const fileName = req.query.filename as string;
   const jsonDirAutoload = process.env.JSON_AUTOLOAD === undefined ? './data/autoload' : process.env.JSON_AUTOLOAD;
   const jsonDirError = process.env.JSON_AUTOLOAD === undefined ? './data/autoload' : process.env.JSON_AUTOLOAD;
+  const tmpDir = process.env.TMP_FILE === undefined ? './tmp' : process.env.TMP_FILE;
 
   // Ensure the directory exists
   const dirName = path.join(jsonDirAutoload, meteor);
@@ -21,7 +22,7 @@ export async function uploadFile(req: Request, res: Response): Promise<Response>
     fs.mkdirSync(dirName, { recursive: true });
   }
   const fullFilePath = path.join(dirName, fileName);
-  const tempFilePath = './tmp/' + req.file?.originalname;
+  const tempFilePath = tmpDir + '/' + req.file?.originalname;
 
   try {
     // Validate parameters

@@ -2,9 +2,10 @@ import { Router } from "express";
 import { uploadFile } from "../controllers/app.controller.js";
 import multer from "multer";
 
+const tmpDir = process.env.TMP_FILE === undefined ? './tmp' : process.env.TMP_FILE;
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'tmp/') // Specify the directory for storing uploaded files
+    cb(null, tmpDir) // Specify the directory for storing uploaded files
   },
   filename: function (req, file, cb) {
     cb(null, file.originalname) // Generate unique filenames

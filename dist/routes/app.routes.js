@@ -6,9 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const app_controller_js_1 = require("../controllers/app.controller.js");
 const multer_1 = __importDefault(require("multer"));
+const tmpDir = process.env.TMP_FILE === undefined ? './tmp' : process.env.TMP_FILE;
 const storage = multer_1.default.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'tmp/'); // Specify the directory for storing uploaded files
+        cb(null, tmpDir); // Specify the directory for storing uploaded files
     },
     filename: function (req, file, cb) {
         cb(null, file.originalname); // Generate unique filenames
