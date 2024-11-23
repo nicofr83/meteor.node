@@ -21,21 +21,22 @@ export async function uploadFile(req: Request, res: Response): Promise<Response>
   if (!fs.existsSync(dirName)) {
     fs.mkdirSync(dirName, { recursive: true });
   }
-  const fullFilePath = path.join(dirName, fileName);
   const tempFilePath = tmpDir + '/' + req.file?.originalname;
+  // Validate parameters
+  if (!meteor || !fileName) {
+    myLog.info("upload_file", "Missing parameters: meteor: "  + meteor + " filename: " + fileName);
+    removeFile(myLog, tempFilePath, 'delete');
+    return res.status(400).json({ error: 'Missing parameters' });
+  }
 
+  if (meteor.includes("'") || meteor.includes(";")) {
+    myLog.info("upload_file", "Invalid meteor: "  + meteor);
+    removeFile(myLog, tempFilePath, 'delete');
+    return res.status(400).json({ error: 'Invalid meteor' });
+  }
+  const fullFilePath = path.join(dirName, fileName);
+  
   try {
-    // Validate parameters
-    if (!meteor || !fileName) {
-      removeFile(tempFilePath, 'delete');
-      return res.status(400).json({ error: 'Missing parameters' });
-    }
-
-    if (meteor.includes("'") || meteor.includes(";")) {
-      removeFile(tempFilePath, 'delete');
-      return res.status(400).json({ error: 'Invalid meteor' });
-    }
-
     cur_meteor = await Poste.getOne(undefined,
       {
         'columns': ['meteor', 'api_key'],
@@ -43,36 +44,41 @@ export async function uploadFile(req: Request, res: Response): Promise<Response>
       } as DBOptions);
 
     if (cur_meteor== undefined || cur_meteor.data.meteor == undefined) {
-      removeFile(tempFilePath, 'delete');
+      myLog.info("upload_file", "Invalid meteor: "  + meteor);
+      removeFile(myLog, tempFilePath, 'delete');
       return res.status(400).json({ error: 'Invalid meteor' });
     }
 
     // Validate API key
     if (req.headers['x-api-key'] !== cur_meteor.data.api_key) {
-      removeFile(tempFilePath, 'delete');
+      myLog.info("upload_file", "Invalid credential: "  + meteor + ', cred: ' + req.headers['x-api-key']);
+      removeFile(myLog, tempFilePath, 'delete');
       return res.status(401).json({ error: 'Invalid Credentials' });
     }
 
     // Check if the file already exists
     if (fs.existsSync(fullFilePath)) {
-      removeFile(tempFilePath, 'delete');
+      myLog.info("upload_file", 'File ' + fullFilePath + ' already exists');
+      removeFile(myLog, tempFilePath, 'delete');
       return res.status(400).json({ error: 'File ' + fullFilePath + ' already exists' });
     }
 
     // move the file to the final destination
     fs.renameSync(tempFilePath, fullFilePath);
+    myLog.info("upload_file", 'File uploaded' + fullFilePath);
     return res.status(200).json({ message: 'File uploaded successfully' });
 
   } catch (error: any) {
-    removeFile(tempFilePath, jsonDirError);
+    removeFile(myLog, tempFilePath, jsonDirError);
     myLog.exception("upload_file", error);
     return res.status(500).json({ error: error.message });
   }
 };
 
-function removeFile(filePath: string, errorDirecty: string): void {
+function removeFile(myLog: Log, filePath: string, errorDirecty: string): void {
   if (fs.existsSync(filePath)) {
     if (errorDirecty === 'delete') {
+      myLog.info("upload_file", 'File ' + filePath + ' removed');
       fs.unlinkSync(filePath);
       return;
     }
