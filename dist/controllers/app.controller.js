@@ -13,9 +13,9 @@ const log_js_1 = require("../tools/log.js");
 async function uploadFile(req, res) {
     const myLog = typedi_1.Container.get(log_js_1.Log);
     let cur_meteor = null;
-    const meteor = req.query.meteor;
-    ;
-    const fileName = req.query.filename;
+    const meteor = (req.query.meteor == undefined ? req.file?.originalname.split('.')[1] : req.query.meteor);
+    const fileName = (req.query.filename == undefined ? req.file?.originalname : req.query.filename);
+    console.log('meteor: ' + meteor + ' filename: ' + fileName);
     const jsonDirAutoload = process.env.JSON_AUTOLOAD === undefined ? './data/autoload' : process.env.JSON_AUTOLOAD;
     const jsonDirError = process.env.JSON_AUTOLOAD === undefined ? './data/autoload' : process.env.JSON_AUTOLOAD;
     const tmpDir = process.env.TMP_FILE === undefined ? './tmp' : process.env.TMP_FILE;
@@ -61,7 +61,7 @@ async function uploadFile(req, res) {
         }
         // move the file to the final destination
         fs_1.default.renameSync(tempFilePath, fullFilePath);
-        myLog.info("upload_file", 'File uploaded' + fullFilePath);
+        myLog.info("upload_file", 'File uploaded: ' + fullFilePath);
         return res.status(200).json({ message: 'File uploaded successfully' });
     }
     catch (error) {
