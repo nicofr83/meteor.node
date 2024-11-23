@@ -11,4 +11,8 @@ export async function checkMeAsync(req: Request, res: Response): Promise<Respons
         message: 'I am alive (async)!',
     });
 };
-  
+export function home(req: Request, res: Response): Response{
+    return res.status(200).send({
+        message: 'Welcome on meteor backend',
+    });
+};
