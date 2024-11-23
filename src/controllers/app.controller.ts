@@ -35,7 +35,7 @@ export async function uploadFile(req: Request, res: Response): Promise<Response>
   let fileName: string | null = null;
 
   try {
-    let jsonDir = process.env.TJSON_AUTOLOAD as string;
+    let jsonDir = process.env.JSON_AUTOLOAD as string;
     if (jsonDir == undefined) {
       jsonDir = './data/autoload';
     }
