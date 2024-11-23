@@ -1,0 +1,1 @@
+{"version":3,"file":"jsonLoader.test.js","sourceRoot":"","sources":["../../../src/dataLoader/json/jsonLoader.test.ts"],"names":[],"mappings":";;AAAA,4BAA0B;AAK1B,QAAQ,CAAC,YAAY,EAAE,GAAG,EAAE;IACxB,EAAE,CAAC,gBAAgB,EAAE,KAAK,IAAI,EAAE;QAC5B,MAAM,CAAC,IAAI,CAAC,CAAC;IACjB,CAAC,CAAC,CAAC;AACP,CAAC,CAAC,CAAC"}
