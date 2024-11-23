@@ -1,10 +1,32 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-var fs = require("fs");
-fs.watch(".", function (eventType, filename) {
-    var files = fs.readdirSync(".");
-    for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
-        var aFile = files_1[_i];
+const fs = __importStar(require("fs"));
+fs.watch(".", (eventType, filename) => {
+    const files = fs.readdirSync("./*.json");
+    for (const aFile of files) {
         console.dir(aFile);
     }
     // console.dir(eventType);
@@ -14,6 +36,7 @@ fs.watch(".", function (eventType, filename) {
     //     console.log;
     // });
 });
-setInterval(function () {
+setInterval(() => {
     console.log('    timeout');
 }, 5000);
+//# sourceMappingURL=fsWatch.js.map
