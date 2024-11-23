@@ -10,11 +10,11 @@ export class DB_PG extends DB{
     constructor() {
         super();
         this.pool = new pg.Pool ({
-            user: process.env.POSTGRES_ADDON_USER ? process.env.POSTGRES_ADDON_USER : 'postgres',
-            password: process.env.POSTGRES_ADDON_PASSWORD ? process.env.POSTGRES_ADDON_PASSWORD : '',
-            host: process.env.POSTGRES_ADDON_HOST ? process.env.POSTGRES_ADDON_HOST : 'localhost',
-            port: parseInt(process.env.POSTGRES_ADDON_PORT ? process.env.POSTGRES_ADDON_PORT : '5432'),
-            database: process.env.POSTGRES_ADDON_DB ? process.env.POSTGRES_ADDON_DB : 'climato'
+            user: process.env.POSTGRESQL_ADDON_USER ? process.env.POSTGRESQL_ADDON_USER : 'postgres',
+            password: process.env.POSTGRESQL_ADDON_PASSWORD ? process.env.POSTGRESQL_ADDON_PASSWORD : '',
+            host: process.env.POSTGRESQL_ADDON_HOST ? process.env.POSTGRESQL_ADDON_HOST : 'localhost',
+            port: parseInt(process.env.POSTGRESQL_ADDON_PORT ? process.env.POSTGRESQL_ADDON_PORT : '5432'),
+            database: process.env.POSTGRESQL_ADDON_DB ? process.env.POSTGRESQL_ADDON_DB : 'climato'
         });
     }
 
