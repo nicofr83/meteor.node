@@ -3,6 +3,9 @@
   "version": "0.9.0",
   "description": "Meteor db server",
   "main": "dist/index.js",
+  "engines": {
+    "node": "^22"
+  },
   "scripts": {
     "test": "env TZ='UTC' npx jest",
     "test2": "env TZ='UTC' npx jest --coverage; open coverage/lcov-report/index.html",
