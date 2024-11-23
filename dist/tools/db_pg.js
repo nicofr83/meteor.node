@@ -59,15 +59,7 @@ let DB_PG = (() => {
         }
         pool;
         constructor() {
-            console.log('user: ' + process.env.POSTGRESQL_ADDON_USER);
-            const login_string = {
-                user: process.env.POSTGRESQL_ADDON_USER ? process.env.POSTGRESQL_ADDON_USER : 'postgres',
-                password: process.env.POSTGRESQL_ADDON_PASSWORD ? process.env.POSTGRESQL_ADDON_PASSWORD : '',
-                host: process.env.POSTGRESQL_ADDON_HOST ? process.env.POSTGRESQL_ADDON_HOST : 'localhost',
-                port: parseInt(process.env.POSTGRESQL_ADDON_PORT ? process.env.POSTGRESQL_ADDON_PORT : '5432'),
-                database: process.env.POSTGRESQL_ADDON_DB ? process.env.POSTGRESQL_ADDON_DB : 'climato'
-            };
-            console.dir(login_string);
+            // this.myLog.debug('DB_PG constructor', 'new connection');
             super();
             this.pool = new pg_1.default.Pool({
                 user: process.env.POSTGRESQL_ADDON_USER ? process.env.POSTGRESQL_ADDON_USER : 'postgres',

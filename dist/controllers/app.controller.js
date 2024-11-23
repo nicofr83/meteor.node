@@ -4,108 +4,75 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.uploadFile = uploadFile;
-const express_1 = __importDefault(require("express"));
-const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
-const pg_1 = require("pg");
-// import { v4 as uuidv4 } from 'uuid';
-const multer_1 = __importDefault(require("multer"));
-// Utility function imports
-const poste_1 = require("../repository/poste");
 require("reflect-metadata");
 const typedi_1 = require("typedi");
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+const poste_1 = require("../repository/poste");
 const log_js_1 = require("../tools/log.js");
-const app = (0, express_1.default)();
-const port = 3000;
-// Set up PostgreSQL connection pool
-const pool = new pg_1.Pool({
-    user: 'your-username',
-    host: 'localhost',
-    database: 'your-database',
-    password: 'your-password',
-    port: 5432,
-});
-// Set up file upload handling with Multer (file storage configuration)
-const upload = (0, multer_1.default)({ dest: 'tmp/' });
 async function uploadFile(req, res) {
     const myLog = typedi_1.Container.get(log_js_1.Log);
-    let pgClient = null;
-    let pgQueryResult = null;
-    let meteor = null;
-    let fileName = null;
+    let cur_meteor = null;
+    const meteor = req.query.meteor;
+    ;
+    const fileName = req.query.filename;
+    const jsonDirAutoload = process.env.JSON_AUTOLOAD === undefined ? './data/autoload' : process.env.JSON_AUTOLOAD;
+    const jsonDirError = process.env.JSON_AUTOLOAD === undefined ? './data/autoload' : process.env.JSON_AUTOLOAD;
+    // Ensure the directory exists
+    const dirName = path_1.default.join(jsonDirAutoload, meteor);
+    if (!fs_1.default.existsSync(dirName)) {
+        fs_1.default.mkdirSync(dirName, { recursive: true });
+    }
+    const fullFilePath = path_1.default.join(dirName, fileName);
+    const tempFilePath = './tmp/' + req.file?.originalname;
     try {
-        let jsonDir = process.env.TJSON_AUTOLOAD;
-        if (jsonDir == undefined) {
-            jsonDir = './data/autoload';
-        }
-        const meteorRequested = req.query.meteor;
-        fileName = req.query.filename;
         // Validate parameters
-        if (!meteorRequested || !fileName) {
+        if (!meteor || !fileName) {
+            removeFile(tempFilePath, 'delete');
             return res.status(400).json({ error: 'Missing parameters' });
         }
-        if (meteorRequested.includes("'") || meteorRequested.includes(";")) {
+        if (meteor.includes("'") || meteor.includes(";")) {
+            removeFile(tempFilePath, 'delete');
             return res.status(400).json({ error: 'Invalid meteor' });
         }
-        // Handle DB connection
-        try {
-            pgQueryResult = await poste_1.Poste.getOne(undefined, {
-                'columns': ['meteor', 'api_key'],
-                'where': "meteor like '" + meteorRequested + "'"
-            });
-            if (pgQueryResult == undefined || pgQueryResult.data.meteor == undefined) {
-                return res.status(400).json({ error: 'Invalid meteor' });
-            }
-            meteor = pgQueryResult.data.meteor;
-            const apiKey = pgQueryResult.data.api_key;
-            // Validate API key
-            if (req.headers['x-api-key'] !== apiKey) {
-                return res.status(401).json({ error: 'Invalid Credentials' });
-            }
-            // Ensure the directory exists
-            const dirName = path_1.default.join(jsonDir, meteor);
-            if (!fs_1.default.existsSync(dirName)) {
-                fs_1.default.mkdirSync(dirName, { recursive: true });
-            }
-            const fullFilePath = path_1.default.join(dirName, fileName);
-            console.log(fullFilePath);
-            // Check if the file already exists
-            if (fs_1.default.existsSync(fullFilePath)) {
-                return res.status(400).json({ error: 'File already exists' });
-            }
-            const tempFilePath = fullFilePath.replace('.json', '.tmp_json');
-            upload.single(tempFilePath)(req, res, (err) => {
-                console.log('multer callback: ', req.file, req.body);
-                if (err) {
-                    return res.status(500).json({ error: err.message });
-                }
-                console.dir(req);
-                // Rename to final .json extension
-                fs_1.default.renameSync(tempFilePath, fullFilePath);
-                return res.status(200).json({ message: 'File uploaded successfully' });
-            });
-            // // Save file locally with the temporary name
-            // fs.renameSync(req.file.path, tempFilePath);
-            return res.status(200).json({ message: 'exit before file uploaded' });
+        cur_meteor = await poste_1.Poste.getOne(undefined, {
+            'columns': ['meteor', 'api_key'],
+            'where': "meteor like '" + meteor + "'"
+        });
+        if (cur_meteor == undefined || cur_meteor.data.meteor == undefined) {
+            removeFile(tempFilePath, 'delete');
+            return res.status(400).json({ error: 'Invalid meteor' });
         }
-        catch (error) {
-            // Handle DB connection errors
-            myLog.exception("upload_file", error);
-            return res.status(500).json({ error: error.message });
+        // Validate API key
+        if (req.headers['x-api-key'] !== cur_meteor.data.api_key) {
+            removeFile(tempFilePath, 'delete');
+            return res.status(401).json({ error: 'Invalid Credentials' });
         }
-        finally {
-            if (pgClient) {
-                pgClient.release();
-            }
+        // Check if the file already exists
+        if (fs_1.default.existsSync(fullFilePath)) {
+            removeFile(tempFilePath, 'delete');
+            return res.status(400).json({ error: 'File ' + fullFilePath + ' already exists' });
         }
+        // move the file to the final destination
+        fs_1.default.renameSync(tempFilePath, fullFilePath);
+        return res.status(200).json({ message: 'File uploaded successfully' });
     }
     catch (error) {
-        // Catching other errors
-        myLog.exception('uploadFile', error, { meteor, fileName });
+        removeFile(tempFilePath, jsonDirError);
+        myLog.exception("upload_file", error);
         return res.status(500).json({ error: error.message });
     }
 }
 ;
+function removeFile(filePath, errorDirecty) {
+    if (fs_1.default.existsSync(filePath)) {
+        if (errorDirecty === 'delete') {
+            fs_1.default.unlinkSync(filePath);
+            return;
+        }
+        fs_1.default.renameSync(filePath, path_1.default.join(errorDirecty, path_1.default.basename(filePath)));
+    }
+}
 // Breakdown:
 // Express Setup:
 // I used the express framework for handling HTTP requests and responses.
