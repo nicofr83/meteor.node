@@ -173,19 +173,31 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
 
     public addMesureValueToRecords(dumpData: DumpArray): void {
         const date_local_key: keyof typeof dumpData.archive = DumpArchiveIdx.date_local;
+        let wind_values: { [key: string]: number } = {};
+        let wind_dir_idx: keyof typeof wind_values;
+        let wind_dir_idx2: keyof typeof wind_values;
+
         
         for (const anArchiveData of dumpData.archive) {
+            wind_values = {};
             const obs_id =  anArchiveData[DumpArchiveIdx.obs_id];
             for (const aMesure of this.mAll) {
-                if (aMesure.archive_table == undefined || (aMesure.min == false && aMesure.max == false)) {
-                    continue;
-                }
                 var json_input_key: keyof typeof DumpArchiveIdx = aMesure.json_input as any;
                 const obs_date = new Date(anArchiveData[date_local_key]);
                 const obs_value = anArchiveData[DumpArchiveIdx[json_input_key]];
+
+                if (aMesure.archive_table == undefined || (aMesure.min == false && aMesure.max == false)) {
+                    if (aMesure.is_winddir) {
+                        wind_dir_idx = 'm_' + aMesure.id;
+                        wind_values[wind_dir_idx] = obs_value as any;
+                    }
+                    continue;
+                }
                 if ((aMesure.allow_zero == false && obs_value == 0 ) || obs_value == undefined) {
                     continue;
                 }
+                wind_dir_idx2 = 'm_' + aMesure.field_dir;
+
                 dumpData.records.push([
                     new Date(obs_date.setHours(0,0,0,0)),
                     Number(aMesure.id),
@@ -196,7 +208,7 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
                     aMesure.min == true ? obs_date : undefined,
                     aMesure.max == true ? obs_value : undefined,
                     aMesure.max == true ? obs_date : undefined,
-                    undefined,
+                    (wind_values[wind_dir_idx2] ? undefined : wind_values[wind_dir_idx2]),
                     // (113, 'gust dir',        'wind_gust_dir',   'windGustDir',      'skip',       null,     false,   false,    0,      false,    true,  'wind_max_dir',        '{}'),
                     // (114, 'gust',            'wind_gust',       'windGust',         'wind',       113,      false,   true,     3,       true,    true,      'wind_max',
                 ]);
@@ -243,7 +255,7 @@ export class DumpLoader extends DataLoader implements DumpLoader_INT {
             (aMesure.min ? 'from_unixtime(mintime + 3600 * ' + (this.curPoste as PosteMeteor).getData().delta_timezone + '), ' : 'null, ') +
             (aMesure.max ? 'max, ' : 'null, ') +
             (aMesure.max ? 'from_unixtime(maxtime + 3600 * ' + (this.curPoste as PosteMeteor).getData().delta_timezone + '), ' : 'null, ') +
-            (aMesure.is_wind == false ? 'null': 'max_dir') + ' as max_dir '+
+            (aMesure.is_maxdir == false ? 'null': 'max_dir') + ' as max_dir '+
             'from archive_day_' + aMesure.archive_col + ' ' +
             'where dateTime > ' + limits.min + ' and dateTime <= ' + limits.max + ' '+
             removeZeroValue + 

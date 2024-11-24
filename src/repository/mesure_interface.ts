@@ -12,7 +12,8 @@ export interface MesureData extends EntityData{
     max: boolean|undefined;
     min: boolean|undefined;
     agreg_type: Aggreg_Type|undefined;
-    is_wind: boolean|undefined;
+    is_winddir: boolean|undefined;
+    is_maxdir: boolean|undefined;
     allow_zero: boolean|undefined;
     convert: string|undefined;
     j: string|undefined;

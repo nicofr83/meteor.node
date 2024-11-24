@@ -194,18 +194,27 @@ let DumpLoader = (() => {
         }
         addMesureValueToRecords(dumpData) {
             const date_local_key = dataLoader_interface_js_1.DumpArchiveIdx.date_local;
+            let wind_values = {};
+            let wind_dir_idx;
+            let wind_dir_idx2;
             for (const anArchiveData of dumpData.archive) {
+                wind_values = {};
                 const obs_id = anArchiveData[dataLoader_interface_js_1.DumpArchiveIdx.obs_id];
                 for (const aMesure of this.mAll) {
-                    if (aMesure.archive_table == undefined || (aMesure.min == false && aMesure.max == false)) {
-                        continue;
-                    }
                     var json_input_key = aMesure.json_input;
                     const obs_date = new Date(anArchiveData[date_local_key]);
                     const obs_value = anArchiveData[dataLoader_interface_js_1.DumpArchiveIdx[json_input_key]];
+                    if (aMesure.archive_table == undefined || (aMesure.min == false && aMesure.max == false)) {
+                        if (aMesure.is_winddir) {
+                            wind_dir_idx = 'm_' + aMesure.id;
+                            wind_values[wind_dir_idx] = obs_value;
+                        }
+                        continue;
+                    }
                     if ((aMesure.allow_zero == false && obs_value == 0) || obs_value == undefined) {
                         continue;
                     }
+                    wind_dir_idx2 = 'm_' + aMesure.field_dir;
                     dumpData.records.push([
                         new Date(obs_date.setHours(0, 0, 0, 0)),
                         Number(aMesure.id),
@@ -216,7 +225,7 @@ let DumpLoader = (() => {
                         aMesure.min == true ? obs_date : undefined,
                         aMesure.max == true ? obs_value : undefined,
                         aMesure.max == true ? obs_date : undefined,
-                        undefined,
+                        (wind_values[wind_dir_idx2] ? undefined : wind_values[wind_dir_idx2]),
                         // (113, 'gust dir',        'wind_gust_dir',   'windGustDir',      'skip',       null,     false,   false,    0,      false,    true,  'wind_max_dir',        '{}'),
                         // (114, 'gust',            'wind_gust',       'windGust',         'wind',       113,      false,   true,     3,       true,    true,      'wind_max',
                     ]);
@@ -260,7 +269,7 @@ let DumpLoader = (() => {
                 (aMesure.min ? 'from_unixtime(mintime + 3600 * ' + this.curPoste.getData().delta_timezone + '), ' : 'null, ') +
                 (aMesure.max ? 'max, ' : 'null, ') +
                 (aMesure.max ? 'from_unixtime(maxtime + 3600 * ' + this.curPoste.getData().delta_timezone + '), ' : 'null, ') +
-                (aMesure.is_wind == false ? 'null' : 'max_dir') + ' as max_dir ' +
+                (aMesure.is_maxdir == false ? 'null' : 'max_dir') + ' as max_dir ' +
                 'from archive_day_' + aMesure.archive_col + ' ' +
                 'where dateTime > ' + limits.min + ' and dateTime <= ' + limits.max + ' ' +
                 removeZeroValue +

@@ -10,6 +10,13 @@
         "name": "debug node",
         "program": "${workspaceFolder}/dist/index.js",
         "skipFiles": ["<node_internals>/**"]
+    },
+    {
+        "type": "node",
+        "request": "launch",
+        "name": "debug migrate",
+        "program": "${workspaceFolder}/dist/workers/migrate/migrateRun.js",
+        "skipFiles": ["<node_internals>/**"]
     }
     ]
   }

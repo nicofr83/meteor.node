@@ -69,18 +69,20 @@ let MesureMeteor = (() => {
                         }
                     }
                 }
+                const table_name = (aMesure.archive_table == null && aMesure.archive_table != 'skip') ? aMesure.archive_table : undefined;
                 fixedMesures.push({
                     id: aMesure.id,
                     name: aMesure.name,
                     json_input: aMesure.json_input,
                     json_input_bis: aMesure.json_input_bis,
                     archive_col: aMesure.archive_col,
-                    archive_table: (aMesure.archive_table == null && aMesure.archive_table != 'skip') ? aMesure.name : undefined,
+                    archive_table: (table_name == undefined) ? aMesure.name : aMesure.archive_table,
                     field_dir: aMesure.field_dir,
                     max: aMesure.max,
                     min: aMesure.min,
                     agreg_type: aMesure.agreg_type,
-                    is_wind: aMesure.is_wind,
+                    is_winddir: aMesure.is_winddir,
+                    is_maxdir: aMesure.is_maxdir,
                     allow_zero: aMesure.allow_zero,
                     convert: aMesure.convert,
                     j: aMesure.j,

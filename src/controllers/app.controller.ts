@@ -12,7 +12,6 @@ export async function uploadFile(req: Request, res: Response): Promise<Response>
   let cur_meteor: any = null;
   const meteor = (req.query.meteor == undefined? req.file?.originalname.split('.')[1]: req.query.meteor) as string;
   const fileName = (req.query.filename == undefined ? req.file?.originalname : req.query.filename) as string;
-  console.log('meteor: ' + meteor + ' filename: ' + fileName);
   const jsonDirAutoload = process.env.JSON_AUTOLOAD === undefined ? './data/autoload' : process.env.JSON_AUTOLOAD;
   const jsonDirError = process.env.JSON_AUTOLOAD === undefined ? './data/autoload' : process.env.JSON_AUTOLOAD;
   const tmpDir = process.env.TMP_FILE === undefined ? './tmp' : process.env.TMP_FILE;
